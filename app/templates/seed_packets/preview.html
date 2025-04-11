@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Seed Data Preview{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Seed Data Preview</h1>
+        <a href="/seed-packets/upload" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Upload
+        </a>
+    </div>
+    
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Review the data extracted from your seed packet image. You can edit any field before creating the seed record.
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Extracted Data</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/seed-packets/create-from-preview" method="POST">
+                        <!-- Hidden fields for image data -->
+                        <input type="hidden" name="file_path" value="{{ full_file_path }}">
+                        <input type="hidden" name="original_filename" value="{{ original_filename }}">
+                        <input type="hidden" name="mime_type" value="{{ mime_type }}">
+                        <input type="hidden" name="ocr_text" value="{{ ocr_text }}">
+                        <input type="hidden" name="structured_data_json" value="{{ structured_data_json }}">
+                        
+                        <!-- Editable seed fields -->
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Plant Name</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ preview_seed.name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="variety" class="form-label">Variety</label>
+                            <input type="text" class="form-control" id="variety" name="variety" value="{{ preview_seed.variety }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="brand" class="form-label">Brand</label>
+                            <input type="text" class="form-control" id="brand" name="brand" value="{{ preview_seed.brand }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="germination_rate" class="form-label">Germination Rate</label>
+                            <input type="number" class="form-control" id="germination_rate" name="germination_rate" value="{{ preview_seed.germination_rate }}" min="0" max="1" step="0.01">
+                            <div class="form-text">Enter as a decimal (e.g., 0.85 for 85%)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="maturity" class="form-label">Days to Maturity</label>
+                            <input type="number" class="form-control" id="maturity" name="maturity" value="{{ preview_seed.maturity }}" min="0">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="growth" class="form-label">Growth Habit</label>
+                            <input type="text" class="form-control" id="growth" name="growth" value="{{ preview_seed.growth }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="seed_depth" class="form-label">Seed Depth (inches)</label>
+                            <input type="number" class="form-control" id="seed_depth" name="seed_depth" value="{{ preview_seed.seed_depth }}" step="0.125" min="0">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="spacing" class="form-label">Plant Spacing (inches)</label>
+                            <input type="number" class="form-control" id="spacing" name="spacing" value="{{ preview_seed.spacing }}" step="0.25" min="0">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4">{{ preview_seed.notes }}</textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Create Seed
+                            </button>
+                            <a href="/seed-packets/upload" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Image & OCR Text</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <img src="/uploads/{{ file_path }}" class="img-fluid rounded border" alt="Seed Packet Image" style="max-height: 300px;">
+                        {% if display_error %}
+                        <div class="alert alert-warning mt-2">
+                            <i class="bi bi-exclamation-triangle-fill"></i> 
+                            Image may not display correctly. File path: {{ file_path }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Vision API Provider Badge -->
+                    <div class="alert alert-success mb-3">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <strong>Data extracted with Gemini Vision AI</strong>
+                    </div>
+                    
+                    <div class="accordion mt-3" id="ocrAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOCR">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOCR" aria-expanded="false" aria-controls="collapseOCR">
+                                    View Raw OCR Text
+                                </button>
+                            </h2>
+                            <div id="collapseOCR" class="accordion-collapse collapse" aria-labelledby="headingOCR" data-bs-parent="#ocrAccordion">
+                                <div class="accordion-body">
+                                    <pre class="border p-2 bg-light" style="white-space: pre-wrap; max-height: 300px; overflow-y: auto;">{{ ocr_text }}</pre>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingJSON">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseJSON" aria-expanded="false" aria-controls="collapseJSON">
+                                    View Structured Data JSON
+                                </button>
+                            </h2>
+                            <div id="collapseJSON" class="accordion-collapse collapse" aria-labelledby="headingJSON" data-bs-parent="#ocrAccordion">
+                                <div class="accordion-body">
+                                    <pre class="border p-2 bg-light" style="white-space: pre-wrap; max-height: 300px; overflow-y: auto;">{{ structured_data|tojson(indent=2) }}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- Bootstrap icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}

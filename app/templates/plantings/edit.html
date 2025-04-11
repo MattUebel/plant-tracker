@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ planting.name }} - Plant Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Back button -->
+    <div class="mb-3">
+        <a href="/plantings/{{ planting.id }}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Planting Details
+        </a>
+    </div>
+    
+    <h1 class="mb-4">Edit {{ planting.name }}</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form action="/plantings/{{ planting.id }}/update" method="post" enctype="multipart/form-data">
+                <div class="row mb-4">
+                    <!-- Left Column - Planting Details -->
+                    <div class="col-md-6">
+                        <h5 class="card-title mb-3">Planting Details</h5>
+                        
+                        <!-- Name -->
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name *</label>
+                            <input type="text" id="name" name="name" required
+                                   class="form-control"
+                                   value="{{ planting.name }}">
+                        </div>
+
+                        <!-- Seed Selection -->
+                        <div class="mb-3">
+                            <label for="seed_id" class="form-label">Seed</label>
+                            <select id="seed_id" name="seed_id" class="form-select">
+                                <option value="">-- Select Seed --</option>
+                                {% for seed in seeds %}
+                                    <option value="{{ seed.id }}" {{ 'selected' if seed.id == planting.seed_id else '' }}>
+                                        {{ seed.name }}{% if seed.variety %} - {{ seed.variety }}{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Seeds Planted -->
+                        <div class="mb-3">
+                            <label for="seeds_planted" class="form-label">Seeds Planted</label>
+                            <input type="number" id="seeds_planted" name="seeds_planted" min="1"
+                                   class="form-control"
+                                   value="{{ planting.seeds_planted }}">
+                        </div>
+
+                        <!-- Successful Plants -->
+                        <div class="mb-3">
+                            <label for="successful_plants" class="form-label">Successful Plants</label>
+                            <input type="number" id="successful_plants" name="successful_plants" min="0"
+                                   class="form-control"
+                                   value="{{ planting.successful_plants }}">
+                            <div class="form-text">Number of plants that successfully grew</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column - Growth Info -->
+                    <div class="col-md-6">
+                        <h5 class="card-title mb-3">Growth Information</h5>
+
+                        <!-- Planting Date -->
+                        <div class="mb-3">
+                            <label for="planting_date" class="form-label">Planting Date</label>
+                            <input type="date" id="planting_date" name="planting_date"
+                                   class="form-control"
+                                   value="{{ planting.planting_date|strftime('%Y-%m-%d') if planting.planting_date else '' }}">
+                        </div>
+
+                        <!-- Expected and Actual Germination -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="expected_germination_time" class="form-label">Expected Germination (days)</label>
+                                <input type="number" id="expected_germination_time" name="expected_germination_time" min="1"
+                                       class="form-control"
+                                       value="{{ planting.expected_germination_time }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="actual_germination_time" class="form-label">Actual Germination (days)</label>
+                                <input type="number" id="actual_germination_time" name="actual_germination_time" min="1"
+                                       class="form-control"
+                                       value="{{ planting.actual_germination_time }}">
+                            </div>
+                        </div>
+
+                        <!-- Expected and Actual Maturity -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="expected_maturity_time" class="form-label">Expected Maturity (days)</label>
+                                <input type="number" id="expected_maturity_time" name="expected_maturity_time" min="1"
+                                       class="form-control"
+                                       value="{{ planting.expected_maturity_time }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="actual_maturity_time" class="form-label">Actual Maturity (days)</label>
+                                <input type="number" id="actual_maturity_time" name="actual_maturity_time" min="1"
+                                       class="form-control"
+                                       value="{{ planting.actual_maturity_time }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                <div class="mb-4">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea id="notes" name="notes" rows="4"
+                              class="form-control"
+                              placeholder="Any additional notes about this planting...">{{ planting.notes }}</textarea>
+                </div>
+                
+                <!-- Add Transplant Event -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Add Transplant Event</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="transplant_event_date" class="form-label">Transplant Date</label>
+                                <input type="date" id="transplant_event_date" name="transplant_event_date"
+                                       class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="transplant_event_description" class="form-label">Description</label>
+                                <input type="text" id="transplant_event_description" name="transplant_event_description"
+                                       class="form-control"
+                                       placeholder="E.g., Moved to larger pots">
+                            </div>
+                        </div>
+                        <div class="form-text">Leave blank if you're not adding a transplant event</div>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        Update Planting
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+        
+        // Set default date for transplant event if not set
+        if (!document.getElementById('transplant_event_date').value) {
+            document.getElementById('transplant_event_date').value = formattedDate;
+        }
+    });
+</script>
+{% endblock %}

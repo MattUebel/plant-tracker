@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if seed %}
+        Add Image - {{ seed.name }}
+    {% else %}
+        Extract Seed Data from Image
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            {% if seed %}
+                Add Image to {{ seed.name }}
+            {% else %}
+                Extract Seed Data from Image
+            {% endif %}
+        </h1>
+        <a href="{{ '/seeds/' + seed.id|string if seed else '/seeds' }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> {% if seed %}Back to Seed{% else %}Back to Seeds{% endif %}
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form action="{% if seed %}/seeds/{{ seed.id }}/images{% else %}/seeds/extract-from-image{% endif %}" 
+                          method="post" 
+                          enctype="multipart/form-data" 
+                          id="upload-form">
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Seed Packet Image</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                            <div class="form-text">Upload a clear image of your seed packet</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="process_ocr" name="process_ocr" value="true" checked>
+                                <label class="form-check-label" for="process_ocr">
+                                    Extract text data from image
+                                </label>
+                                <div class="form-text">Uses AI to extract text and structured data from the image</div>
+                            </div>
+                        </div>
+                        
+                        {% if seed %}
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="preview_mode" name="preview_mode" value="true" checked>
+                                <label class="form-check-label" for="preview_mode">
+                                    Preview changes before applying
+                                </label>
+                                <div class="form-text">See what data will be extracted before updating the seed record</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" id="upload-button">
+                                <i class="bi bi-cloud-upload"></i> Upload Image
+                            </button>
+                            <a href="{{ '/seeds/' + seed.id|string if seed else '/seeds' }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="d-none position-fixed top-0 start-0 w-100 h-100" style="background-color: rgba(0,0,0,0.5); z-index: 9999;">
+        <div class="d-flex justify-content-center align-items-center h-100">
+            <div class="card p-4 text-center">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5 class="mb-0">Processing Image</h5>
+                <p class="text-muted mt-2 mb-0" id="loading-message">Uploading image...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- Bootstrap icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('upload-form');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingMessage = document.getElementById('loading-message');
+    const processOcrCheckbox = document.getElementById('process_ocr');
+    
+    // If preview mode checkbox exists, make it disabled when OCR is unchecked
+    const previewModeCheckbox = document.getElementById('preview_mode');
+    if (previewModeCheckbox) {
+        processOcrCheckbox.addEventListener('change', function() {
+            previewModeCheckbox.disabled = !this.checked;
+            if (!this.checked) {
+                previewModeCheckbox.checked = false;
+            }
+        });
+    }
+    
+    form.addEventListener('submit', function(e) {
+        const fileInput = document.getElementById('image');
+        const processOcr = processOcrCheckbox.checked;
+        
+        if (fileInput.files.length > 0) {
+            loadingOverlay.classList.remove('d-none');
+            if (processOcr) {
+                loadingMessage.textContent = 'Processing image with AI (10-30 seconds)...';
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

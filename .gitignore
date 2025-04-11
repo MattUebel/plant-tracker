@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.env
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+app/app.db  # Explicitly exclude the app.db file
+
+# Docker
+docker-compose.override.yml
+docker-*.yml
+!docker-compose.yml
+!compose.yml
+
+# Application specific
+uploads/
+app/uploads/
+*.log
+debug_form_data.txt
+app/debug_form_data.txt
+# Keep useful debug scripts: debug_gemini.py, test_gemini_vision.py, test_vision_api.py
+
+# Application instance folders
+instance/
+
+# Alembic migration specific
+migrations/versions/
+
+# Other
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+*.cover
+.hypothesis/

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Apply OCR Data - {{ seed.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Apply OCR Data</h1>
+        <a href="/seeds/{{ seed.id }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Seed
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Edit Extracted Data</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        Review and edit the structured data below before applying it to your seed record.
+                    </div>
+                    
+                    <form action="/seeds/{{ seed.id }}/images/{{ image.id }}/apply-ocr-data" method="post">
+                        <div class="mb-3">
+                            <label for="ocr_data" class="form-label">Structured Data (JSON format)</label>
+                            <textarea class="form-control font-monospace" id="ocr_data" name="ocr_data" rows="15">{{ structured_data | tojson(indent=2) }}</textarea>
+                            <div class="form-text">Edit the JSON data if needed before applying it to the seed record.</div>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="overwrite_existing" name="overwrite_existing" value="true">
+                            <label class="form-check-label" for="overwrite_existing">
+                                Overwrite existing values (if unchecked, only empty fields will be updated)
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/seeds/{{ seed.id }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Apply Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Image Preview -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Seed Packet Image</h5>
+                </div>
+                <div class="card-body p-0">
+                    <img src="/uploads/{{ image.filename }}" class="img-fluid" alt="{{ image.original_filename or 'Seed packet image' }}">
+                </div>
+            </div>
+            
+            <!-- Raw OCR Text -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Raw OCR Text</h5>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#rawOcrCollapse" aria-expanded="false">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
+                <div class="collapse" id="rawOcrCollapse">
+                    <div class="card-body">
+                        <pre class="small" style="white-space: pre-wrap;">{{ image.ocr_text }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- Bootstrap icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}

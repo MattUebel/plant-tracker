@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Review Extracted Seed Data - Plant Tracker{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Review Extracted Seed Data</h1>
+        <a href="/seeds" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Seeds
+        </a>
+    </div>
+    
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        We've created your seed record and extracted additional information from the image. 
+        You can choose to apply the extracted data or keep your manually entered data.
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Data Comparison</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        Review the changes below before applying them to your seed record.
+                    </div>
+                    
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Field</th>
+                                <th>Your Entered Data</th>
+                                <th>OCR Extracted Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Name</td>
+                                <td>{{ seed.name or '-' }}</td>
+                                <td class="{% if seed.name != preview_seed.name %}table-warning{% endif %}">
+                                    {{ preview_seed.name or '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Variety</td>
+                                <td>{{ seed.variety or '-' }}</td>
+                                <td class="{% if seed.variety != preview_seed.variety %}table-warning{% endif %}">
+                                    {{ preview_seed.variety or '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Brand</td>
+                                <td>{{ seed.brand or '-' }}</td>
+                                <td class="{% if seed.brand != preview_seed.brand %}table-warning{% endif %}">
+                                    {{ preview_seed.brand or '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Germination Rate</td>
+                                <td>{{ "{}%".format(seed.germination_rate * 100)|round(1) if seed.germination_rate is not none else '-' }}</td>
+                                <td class="{% if seed.germination_rate != preview_seed.germination_rate %}table-warning{% endif %}">
+                                    {{ "{}%".format(preview_seed.germination_rate * 100)|round(1) if preview_seed.germination_rate is not none else '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Days to Maturity</td>
+                                <td>{{ seed.maturity or '-' }}</td>
+                                <td class="{% if seed.maturity != preview_seed.maturity %}table-warning{% endif %}">
+                                    {{ preview_seed.maturity or '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Growth Habit</td>
+                                <td>{{ seed.growth or '-' }}</td>
+                                <td class="{% if seed.growth != preview_seed.growth %}table-warning{% endif %}">
+                                    {{ preview_seed.growth or '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Seed Depth (in)</td>
+                                <td>{{ seed.seed_depth or '-' }}</td>
+                                <td class="{% if seed.seed_depth != preview_seed.seed_depth %}table-warning{% endif %}">
+                                    {{ preview_seed.seed_depth or '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Spacing (in)</td>
+                                <td>{{ seed.spacing or '-' }}</td>
+                                <td class="{% if seed.spacing != preview_seed.spacing %}table-warning{% endif %}">
+                                    {{ preview_seed.spacing or '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Quantity</td>
+                                <td>{{ seed.quantity or '-' }}</td>
+                                <td class="{% if seed.quantity != preview_seed.quantity %}table-warning{% endif %}">
+                                    {{ preview_seed.quantity or '-' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Notes</td>
+                                <td style="white-space: pre-wrap;">{{ seed.notes or '-' }}</td>
+                                <td class="{% if seed.notes != preview_seed.notes %}table-warning{% endif %}" style="white-space: pre-wrap;">
+                                    {{ preview_seed.notes or '-' }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="mt-4">
+                        <form action="/seeds/apply-ocr" method="post">
+                            <input type="hidden" name="seed_id" value="{{ seed.id }}">
+                            <input type="hidden" name="image_id" value="{{ original_image.id }}">
+                            <input type="hidden" name="ocr_data" value="{{ structured_data|tojson }}">
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="overwrite_existing" name="overwrite_existing" value="true">
+                                <label class="form-check-label" for="overwrite_existing">
+                                    Overwrite my entered values with OCR data (if unchecked, only empty fields will be updated)
+                                </label>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/seeds/{{ seed.id }}" class="btn btn-outline-secondary me-md-2">
+                                    Skip OCR Data
+                                </a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check-circle"></i> Apply OCR Data
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Image Preview -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Seed Packet Image</h5>
+                </div>
+                <div class="card-body p-0">
+                    <img src="/uploads/{{ original_image.filename }}" class="img-fluid" alt="{{ original_image.original_filename or 'Seed packet image' }}">
+                </div>
+            </div>
+            
+            <!-- Raw OCR Text -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Raw OCR Text</h5>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#rawOcrCollapse" aria-expanded="false">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
+                <div class="collapse" id="rawOcrCollapse">
+                    <div class="card-body">
+                        <pre class="small" style="white-space: pre-wrap;">{{ ocr_text }}</pre>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Structured Data -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Structured Data</h5>
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#structuredDataCollapse" aria-expanded="false">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                </div>
+                <div class="collapse" id="structuredDataCollapse">
+                    <div class="card-body">
+                        <pre class="small">{{ structured_data | tojson(indent=2) }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_css %}
+<!-- Bootstrap icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Seed Collection - Plant Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h1>Add New Seed Collection</h1>
+        <a href="/seed-packets/upload" class="btn btn-success">
+            <i class="bi bi-image"></i> Scan Seed Packet Instead
+        </a>
+    </div>
+</div>
+
+<!-- Error Alert -->
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong>Error:</strong> {{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <!-- Manual Entry Interface -->
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <strong>Manual Entry Form:</strong> Fill in the details below to create a new seed collection. 
+            For automatic data extraction from seed packet images, use the 
+            <a href="/seed-packets/upload" class="alert-link">Scan Seed Packet</a> option instead.
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post" action="/seeds" class="row g-3" enctype="multipart/form-data" id="new-seed-form">
+                    <!-- Image Upload Section -->
+                    <div class="col-12 mb-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Optional: Add Seed Packet Image</h5>
+                                <p class="card-text text-muted mb-3">You can attach an image to your seed record.</p>
+                                <div class="mb-3">
+                                    <label for="image" class="form-label">Seed Packet Image</label>
+                                    <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="bi bi-lightbulb-fill text-warning"></i>
+                                    <strong>Need to extract data automatically?</strong> Use the 
+                                    <a href="/seed-packets/upload">Scan Seed Packet</a> option instead.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">Seed Name*</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="variety" class="form-label">Variety</label>
+                        <input type="text" class="form-control" id="variety" name="variety">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="source" class="form-label">Source</label>
+                        <input type="text" class="form-control" id="source" name="source">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="germination_days" class="form-label">Days to Germination</label>
+                        <input type="number" class="form-control" id="germination_days" name="germination_days" min="1">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="maturity_days" class="form-label">Days to Maturity</label>
+                        <input type="number" class="form-control" id="maturity_days" name="maturity_days" min="1">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="planting_depth" class="form-label">Seed Depth (inches)</label>
+                        <input type="number" class="form-control" id="planting_depth" name="planting_depth" min="0" step="0.125">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="spacing" class="form-label">Spacing (inches)</label>
+                        <input type="number" class="form-control" id="spacing" name="spacing" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="growing_notes" class="form-label">Growing Notes</label>
+                        <input type="text" class="form-control" id="growing_notes" name="growing_notes">
+                    </div>
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-primary">Save Seeds</button>
+                        <a href="/seeds" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- Bootstrap icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}

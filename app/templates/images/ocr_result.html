@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}OCR Results - {{ entity.name }} - Plant Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}s">{{ entity_type|title }}s</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}s/{{ entity_id }}">{{ entity.name }}</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}/{{ entity_id }}/images">Images</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}">Image #{{ image.id }}</a></li>
+            <li class="breadcrumb-item active">OCR Results</li>
+        </ol>
+    </nav>
+
+    <h1>OCR Processing Results</h1>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <img src="/uploads/{{ image.filename }}" class="img-fluid" alt="{{ image.original_filename or 'Image' }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ image.original_filename or 'Image #' + image.id|string }}</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Extracted Text</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="ocr-text">{{ ocr_result.ocr_text }}</pre>
+                </div>
+            </div>
+            
+            {% if ocr_result.structured_data %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Structured Data</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tbody>
+                            {% for key, value in ocr_result.structured_data.items() %}
+                                {% if value %}
+                                <tr>
+                                    <th>{{ key|replace('_', ' ')|title }}</th>
+                                    <td>{{ value }}</td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                    <div class="mt-4">
+                        <p>This structured data has been extracted from the image. You can:</p>
+                        <div class="d-flex gap-2">
+                            <a href="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}/apply-ocr-data" class="btn btn-primary">
+                                Edit & Apply Structured Data
+                            </a>
+                            <a href="/{{ entity_type }}/{{ entity_id }}" class="btn btn-secondary">
+                                Back to {{ entity_type|title }} Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <p>No structured data could be extracted from the image.</p>
+                <div class="mt-3">
+                    <a href="/{{ entity_type }}/{{ entity_id }}" class="btn btn-secondary">
+                        Back to {{ entity_type|title }} Details
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.ocr-text {
+    white-space: pre-wrap;
+    font-size: 0.85rem;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+</style>
+{% endblock %}

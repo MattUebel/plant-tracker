@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ seed.name }} - Plant Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>Edit Seeds: {{ seed.name }}</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post" action="/seeds/{{ seed.id }}/update" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">Seed Name*</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ seed.name }}" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="variety" class="form-label">Variety</label>
+                        <input type="text" class="form-control" id="variety" name="variety" value="{{ seed.variety or '' }}">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="brand" class="form-label">Brand</label>
+                        <input type="text" class="form-control" id="brand" name="brand" value="{{ seed.brand or '' }}">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="germination_rate" class="form-label">Germination Rate</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="germination_rate" name="germination_rate" 
+                                   min="0" max="1" step="0.01" value="{{ seed.germination_rate or '' }}">
+                            <span class="input-group-text">ex: 0.85 = 85%</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="maturity" class="form-label">Days to Maturity</label>
+                        <input type="number" class="form-control" id="maturity" name="maturity" min="0" 
+                               value="{{ seed.maturity or '' }}">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="growth" class="form-label">Growth Habit</label>
+                        <input type="text" class="form-control" id="growth" name="growth" 
+                               placeholder="Determinate, Vining, etc" value="{{ seed.growth or '' }}">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="seed_depth" class="form-label">Planting Depth</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="seed_depth" name="seed_depth" 
+                                   min="0" step="0.125" value="{{ '%.3f' % seed.seed_depth if seed.seed_depth else '' }}">
+                            <span class="input-group-text">in</span>
+                        </div>
+                        <div class="form-text">Use fractions: 1/8=0.125, 1/4=0.25, 1/2=0.5</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="spacing" class="form-label">Spacing</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="spacing" name="spacing" 
+                                   min="0" step="0.5" value="{{ seed.spacing or '' }}">
+                            <span class="input-group-text">in</span>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3">{{ seed.notes or '' }}</textarea>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-primary">Update Seeds</button>
+                        <a href="/seeds/{{ seed.id }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

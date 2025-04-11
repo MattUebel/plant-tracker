@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Apply OCR Data - {{ entity.name }} - Plant Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}s">{{ entity_type|title }}s</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}s/{{ entity_id }}">{{ entity.name }}</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}/{{ entity_id }}/images">Images</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}">Image #{{ image.id }}</a></li>
+            <li class="breadcrumb-item active">Apply OCR Data</li>
+        </ol>
+    </nav>
+
+    <h1>Review & Apply OCR Data</h1>
+    
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <img src="/uploads/{{ image.filename }}" class="img-fluid" alt="{{ image.original_filename or 'Image' }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ image.original_filename or 'Image #' + image.id|string }}</h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Edit Extracted Data</h5>
+                </div>
+                <div class="card-body">
+                    <p>Review and edit the structured data extracted from the image before applying it to the {{ entity_type }}.</p>
+                    
+                    <form action="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}/apply-ocr-data" method="post">
+                        <div class="mb-3">
+                            <label for="ocr_data" class="form-label">Structured Data (JSON format)</label>
+                            <textarea class="form-control" id="ocr_data" name="ocr_data" rows="15">{{ structured_data | tojson(indent=2) }}</textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Apply to {{ entity_type|title }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Seed Packet{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Upload Seed Packet</h1>
+    
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Upload a seed packet image for processing</h5>
+            <p class="card-text">Upload an image of a seed packet to automatically extract seed information using Gemini AI. You'll be able to review and adjust the extracted data before saving.</p>
+            
+            <form action="/seed-packets/process" method="POST" enctype="multipart/form-data" class="mt-4" id="upload-form">
+                <div class="mb-3">
+                    <label for="seed_packet" class="form-label">Seed Packet Image</label>
+                    <input type="file" class="form-control" id="seed_packet" name="seed_packet" accept="image/*" required>
+                    <div class="form-text">Upload a clear, well-lit image of the seed packet. Make sure text is visible.</div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="process-button">
+                    <i class="bi bi-magic"></i> Process Image
+                </button>
+                <a href="/seeds" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">Tips for best results</h5>
+            <ul>
+                <li>Use good lighting when taking the photo</li>
+                <li>Make sure the text on the packet is clearly visible</li>
+                <li>Capture both the front and back of the packet if possible</li>
+                <li>Avoid glare or reflections on the packet</li>
+                <li>Keep the image file size under 4MB for optimal processing</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="d-none position-fixed top-0 start-0 w-100 h-100" style="background-color: rgba(0,0,0,0.5); z-index: 9999;">
+        <div class="d-flex justify-content-center align-items-center h-100">
+            <div class="card p-4 text-center">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5 class="mb-0">Processing Seed Packet</h5>
+                <p class="text-muted mt-2 mb-0" id="loading-message">Uploading image...</p>
+                <div class="progress mt-3" style="height: 10px;">
+                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <p class="text-muted mt-2 mb-0" id="progress-message">Starting process...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- Bootstrap icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('upload-form');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingMessage = document.getElementById('loading-message');
+    const progressBar = document.getElementById('progress-bar');
+    const progressMessage = document.getElementById('progress-message');
+    
+    form.addEventListener('submit', function(e) {
+        const fileInput = document.getElementById('seed_packet');
+        
+        if (fileInput.files.length > 0) {
+            // Show loading overlay
+            loadingOverlay.classList.remove('d-none');
+            
+            // Simulate progress updates
+            updateProgress(10, "Uploading image...");
+            
+            setTimeout(() => {
+                updateProgress(30, "Analyzing image with Gemini AI...");
+            }, 1500);
+            
+            setTimeout(() => {
+                updateProgress(50, "Extracting text data...");
+            }, 4000);
+            
+            setTimeout(() => {
+                updateProgress(70, "Converting to structured data...");
+            }, 8000);
+            
+            setTimeout(() => {
+                updateProgress(90, "Finalizing results...");
+            }, 12000);
+            
+            // After 25 seconds, show a message about processing taking longer than usual
+            // This will only be visible if the actual process takes more than 25 seconds
+            setTimeout(() => {
+                if (loadingOverlay.classList.contains('d-none') === false) {
+                    updateProgress(95, "Almost there... (processing is taking longer than usual)");
+                }
+            }, 25000);
+        }
+    });
+    
+    function updateProgress(percent, message) {
+        progressBar.style.width = percent + '%';
+        progressMessage.textContent = message;
+    }
+});
+</script>
+{% endblock %}

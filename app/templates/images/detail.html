@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Image Detail - {{ entity.name }} - Plant Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}s">{{ entity_type|title }}s</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}s/{{ entity_id }}">{{ entity.name }}</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}/{{ entity_id }}/images">Images</a></li>
+            <li class="breadcrumb-item active">Image #{{ image.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <h1>Image Details</h1>
+            <div class="card mb-4">
+                <img src="/uploads/{{ image.filename }}" class="img-fluid" alt="{{ image.original_filename or 'Image' }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ image.original_filename or 'Image #' + image.id|string }}</h5>
+                    <p class="card-text">
+                        <small class="text-muted">Uploaded: {{ image.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Image Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th>File Name</th>
+                                <td>{{ image.original_filename or 'Unknown' }}</td>
+                            </tr>
+                            <tr>
+                                <th>File Size</th>
+                                <td>{{ (image.file_size / 1024) | round(2) }} KB</td>
+                            </tr>
+                            <tr>
+                                <th>File Type</th>
+                                <td>{{ image.mime_type or 'Unknown' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Uploaded</th>
+                                <td>{{ image.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Entity Type</th>
+                                <td>{{ entity_type|title }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    {% if entity_type == 'seed' %}
+                    <div class="d-grid gap-2 mt-3">
+                        {% if not image.ocr_text %}
+                            <form action="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}/process-ocr" method="post">
+                                <button type="submit" class="btn btn-primary btn-block">Process OCR</button>
+                            </form>
+                        {% else %}
+                            <a href="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}/apply-ocr-data" class="btn btn-info btn-block">View/Apply OCR Data</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <form action="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}/delete" method="post" class="mt-3" onsubmit="return confirm('Are you sure you want to delete this image?');">
+                        <button type="submit" class="btn btn-danger btn-block w-100">Delete Image</button>
+                    </form>
+                </div>
+            </div>
+            
+            {% if image.ocr_text %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>OCR Text</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="ocr-text">{{ image.ocr_text }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.ocr-text {
+    white-space: pre-wrap;
+    font-size: 0.85rem;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+{% block title %}{{ planting.name }} - Plant Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .image-card {
+        height: 200px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .image-card img {
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-left: 1px solid #dee2e6;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--bs-primary);
+        left: -7px;
+        top: 5px;
+    }
+    
+    .timeline-item:last-child {
+        border-left: none;
+    }
+    
+    .badge-success {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .badge-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .badge-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Back button -->
+    <div class="mb-3">
+        <a href="/plantings" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Plantings
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Main Content -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">{{ planting.name }}</h1>
+                    <div>
+                        <a href="/plantings/{{ planting.id }}/edit" class="btn btn-sm btn-primary me-2">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <form action="/plantings/{{ planting.id }}/delete" method="post" class="d-inline" 
+                              onsubmit="return confirm('Are you sure you want to delete this planting? This cannot be undone.');">
+                            <button type="submit" class="btn btn-sm btn-danger">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {% if planting.images %}
+                <div id="plantingCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <!-- Add carousel indicators to show how many images -->
+                    <div class="carousel-indicators">
+                        {% for image in planting.images %}
+                        <button type="button" data-bs-target="#plantingCarousel" data-bs-slide-to="{{ loop.index0 }}" 
+                                class="{% if loop.first %}active{% endif %}" 
+                                aria-current="{% if loop.first %}true{% else %}false{% endif %}" 
+                                aria-label="Slide {{ loop.index }}"></button>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="carousel-inner">
+                        {% for image in planting.images %}
+                        <div class="carousel-item {% if loop.first %}active{% endif %}">
+                            <div style="height: 300px; background-color: #f8f9fa; text-align: center;">
+                                <img src="/uploads/{{ image.filename }}" class="d-block mx-auto" style="max-height: 100%; max-width: 100%; object-fit: contain;" alt="Planting image">
+                            </div>
+                            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded">
+                                <small>Image {{ loop.index }} of {{ planting.images|length }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if planting.images|length > 1 %}
+                    <button class="carousel-control-prev" type="button" data-bs-target="#plantingCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#plantingCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="text-center mt-2">
+                    <p class="text-muted"><small>{{ planting.images|length }} image{% if planting.images|length != 1 %}s{% endif %} attached to this planting</small></p>
+                </div>
+                {% endif %}
+
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="card-title">Planting Information</h5>
+                            <table class="table">
+                                <tbody>
+                                    {% if planting.seed %}
+                                    <tr>
+                                        <th scope="row">Seed Used</th>
+                                        <td>
+                                            <a href="/seeds/{{ planting.seed.id }}">
+                                                {{ planting.seed.name }}
+                                                {% if planting.seed.variety %} - {{ planting.seed.variety }}{% endif %}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    <tr>
+                                        <th scope="row">Planting Date</th>
+                                        <td>
+                                            {% if planting.planting_date %}
+                                                {{ planting.planting_date|strftime("%B %d, %Y") }}
+                                            {% else %}
+                                                <span class="text-muted">Not recorded</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Seeds Planted</th>
+                                        <td>
+                                            {% if planting.seeds_planted %}
+                                                {{ planting.seeds_planted }}
+                                            {% else %}
+                                                <span class="text-muted">Not recorded</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Successful Plants</th>
+                                        <td>
+                                            {% if planting.successful_plants %}
+                                                {{ planting.successful_plants }}
+                                                {% if planting.seeds_planted %}
+                                                    <small class="text-muted">
+                                                        ({{ "%.1f"|format(planting.successful_plants / planting.seeds_planted * 100) }}% success)
+                                                    </small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Not recorded</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5 class="card-title">Growth Progress</h5>
+                            <table class="table">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">Expected Germination</th>
+                                        <td>
+                                            {% if planting.expected_germination_time %}
+                                                {{ planting.expected_germination_time }} days
+                                            {% else %}
+                                                <span class="text-muted">Not recorded</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Actual Germination</th>
+                                        <td>
+                                            {% if planting.actual_germination_time %}
+                                                {{ planting.actual_germination_time }} days
+                                                {% if planting.expected_germination_time %}
+                                                    <small class="text-muted">
+                                                        ({{ "%.1f"|format((planting.actual_germination_time - planting.expected_germination_time) / planting.expected_germination_time * 100) }}% 
+                                                        {{ "slower" if planting.actual_germination_time > planting.expected_germination_time else "faster" }})
+                                                    </small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Not recorded</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Expected Maturity</th>
+                                        <td>
+                                            {% if planting.expected_maturity_time %}
+                                                {{ planting.expected_maturity_time }} days
+                                            {% else %}
+                                                <span class="text-muted">Not recorded</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row">Actual Maturity</th>
+                                        <td>
+                                            {% if planting.actual_maturity_time %}
+                                                {{ planting.actual_maturity_time }} days
+                                                {% if planting.expected_maturity_time %}
+                                                    <small class="text-muted">
+                                                        ({{ "%.1f"|format((planting.actual_maturity_time - planting.expected_maturity_time) / planting.expected_maturity_time * 100) }}% 
+                                                        {{ "slower" if planting.actual_maturity_time > planting.expected_maturity_time else "faster" }})
+                                                    </small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Not recorded</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if planting.notes %}
+                    <div class="mb-4">
+                        <h5 class="card-title">Notes</h5>
+                        <div class="card">
+                            <div class="card-body bg-light">
+                                {{ planting.notes|nl2br }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Transplant Events -->
+                    <div class="mb-4">
+                        <h5 class="card-title">Transplant Events</h5>
+                        
+                        {% if planting.transplant_events and planting.transplant_events|length > 0 %}
+                            <div class="list-group">
+                                {% for event in planting.transplant_events %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong>{{ event.date|strftime("%B %d, %Y") }}</strong>
+                                            <form action="/plantings/{{ planting.id }}/remove-transplant/{{ event.id }}" method="post" 
+                                                  onsubmit="return confirm('Are you sure you want to remove this transplant event?');">
+                                                <button type="submit" class="btn-close" aria-label="Remove"></button>
+                                            </form>
+                                        </div>
+                                        <p class="mb-0 mt-1">
+                                            {% if event.location %}
+                                                Moved to: {{ event.location }}
+                                                {% if event.container %} in {{ event.container }}{% endif %}
+                                                {% if event.description %} - {{ event.description }}{% endif %}
+                                            {% elif event.description %}
+                                                {{ event.description }}
+                                            {% else %}
+                                                (No description)
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted fst-italic">No transplant events recorded</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Image Form -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Add New Image</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/plantings/{{ planting.id }}/add-image" method="post" enctype="multipart/form-data">
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*" required
+                                   onchange="updateAddImageFileName(this)">
+                            <button class="btn btn-primary" type="submit">Upload</button>
+                        </div>
+                        <small id="add-image-file-name" class="form-text text-muted">No file chosen</small>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Add Transplant Event Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Add Transplant Event</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/plantings/{{ planting.id }}/add-transplant" method="post">
+                        <div class="mb-3">
+                            <label for="transplant_date" class="form-label">Transplant Date</label>
+                            <input type="date" class="form-control" id="transplant_date" name="transplant_date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" name="location" required
+                                  placeholder="Where was it transplanted? (e.g., 'Outside garden', 'Window sill')">
+                        </div>
+                        <div class="mb-3">
+                            <label for="container" class="form-label">Container (optional)</label>
+                            <input type="text" class="form-control" id="container" name="container"
+                                  placeholder="Container type (e.g., 'Clay pot', 'Raised bed')">
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Additional Notes (optional)</label>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="2"
+                                      placeholder="Any additional notes about this transplant"></textarea>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">Add Transplant Event</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <!-- Planting Event -->
+                        {% if planting.planting_date %}
+                        <div class="timeline-item">
+                            <span class="badge badge-success mb-2">Seeds Planted</span>
+                            <div>{{ planting.planting_date|strftime("%b %d, %Y") }}</div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Transplant Events -->
+                        {% if planting.transplant_events %}
+                        {% for event in planting.transplant_events %}
+                        <div class="timeline-item">
+                            <span class="badge badge-warning mb-2">Transplanted</span>
+                            <div>{{ event.date|strftime("%b %d, %Y") }}</div>
+                            <small class="text-muted">
+                                {% if event.location %}
+                                    {{ event.location }}
+                                    {% if event.container %} ({{ event.container }}){% endif %}
+                                {% elif event.description %}
+                                    {{ event.description }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+
+                        <!-- Germination Event -->
+                        {% if planting.actual_germination_time and planting.planting_date %}
+                        <div class="timeline-item">
+                            <span class="badge badge-info mb-2">Germination</span>
+                            {% set germ_date = planting.planting_date|to_date %}
+                            {% if germ_date %}
+                                {% set germ_days = planting.actual_germination_time|int %}
+                                {% set germination_date = germ_date.toordinal() + germ_days %}
+                                <div>{{ germination_date|to_date|strftime("%b %d, %Y") }}</div>
+                                <small class="text-muted">{{ germ_days }} days after planting</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Maturity Event -->
+                        {% if planting.actual_maturity_time and planting.planting_date %}
+                        <div class="timeline-item">
+                            <span class="badge badge-danger mb-2">Maturity</span>
+                            {% set plant_date = planting.planting_date|to_date %}
+                            {% if plant_date %}
+                                {% set maturity_days = planting.actual_maturity_time|int %}
+                                {% set maturity_date = plant_date.toordinal() + maturity_days %}
+                                <div>{{ maturity_date|to_date|strftime("%b %d, %Y") }}</div>
+                                <small class="text-muted">{{ maturity_days }} days after planting</small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Set today's date as default value for the transplant date input
+    document.addEventListener('DOMContentLoaded', function() {
+        // Format today's date as YYYY-MM-DD for the date input
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+        
+        // Set the date input's value
+        document.getElementById('transplant_date').value = formattedDate;
+        
+        // Initialize the carousel
+        const carousel = document.getElementById('plantingCarousel');
+        if (carousel) {
+            new bootstrap.Carousel(carousel, {
+                interval: 5000,  // Change slides every 5 seconds
+                wrap: true,      // Loop back to first slide
+                touch: true      // Allow touch swipe on mobile
+            });
+        }
+    });
+
+    function updateAddImageFileName(input) {
+        const fileName = input.files.length > 0 ? input.files[0].name : 'No file chosen';
+        document.getElementById('add-image-file-name').textContent = fileName;
+    }
+</script>
+{% endblock %}

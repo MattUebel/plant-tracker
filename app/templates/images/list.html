@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Images for {{ entity.name }} - Plant Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}s">{{ entity_type|title }}s</a></li>
+            <li class="breadcrumb-item"><a href="/{{ entity_type }}s/{{ entity_id }}">{{ entity.name }}</a></li>
+            <li class="breadcrumb-item active">Images</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Images for {{ entity.name }}</h1>
+        <a href="/{{ entity_type }}/{{ entity_id }}/images/upload" class="btn btn-primary">
+            <i class="bi bi-upload"></i> Upload Image
+        </a>
+    </div>
+
+    {% if not images %}
+        <div class="alert alert-info">
+            No images have been uploaded for this {{ entity_type }} yet.
+        </div>
+    {% else %}
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for image in images %}
+                <div class="col">
+                    <div class="card h-100">
+                        <a href="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}">
+                            <img src="/uploads/{{ image.filename }}" class="card-img-top img-fluid" alt="{{ image.original_filename or 'Image' }}">
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ image.original_filename or 'Image #' + image.id|string }}</h5>
+                            <p class="card-text">
+                                <small class="text-muted">Uploaded: {{ image.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </p>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <a href="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}" class="btn btn-sm btn-primary">View</a>
+                            {% if entity_type == 'seed' and not image.ocr_text %}
+                                <form action="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}/process-ocr" method="post">
+                                    <button type="submit" class="btn btn-sm btn-info">Process OCR</button>
+                                </form>
+                            {% endif %}
+                            <form action="/{{ entity_type }}/{{ entity_id }}/images/{{ image.id }}/delete" method="post" onsubmit="return confirm('Are you sure you want to delete this image?');">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Plant Tracker{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary: #4A7C59;
+            --primary-light: #5a9c6e;
+            --secondary: #8A9A5B;
+            --success: #3D8361;
+            --info: #79B4B7;
+            --warning: #F0A04B;
+            --danger: #C74B50;
+            --light: #F2F7F5;
+            --dark: #3A4F41;
+            --bg-pattern: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234a7c59' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--light);
+            background-image: var(--bg-pattern);
+        }
+
+        h1, h2, h3, h4, h5, h6, .navbar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+        }
+
+        .container { 
+            padding-top: 2rem; 
+        }
+
+        .action-buttons { 
+            margin-bottom: 2rem; 
+        }
+
+        /* Navbar styling */
+        .navbar-dark {
+            background-color: var(--primary) !important;
+        }
+
+        /* Button styling */
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: var(--primary-light);
+            border-color: var(--primary-light);
+        }
+        .btn-success {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+        .btn-info {
+            background-color: var(--info);
+            border-color: var(--info);
+            color: white;
+        }
+        .btn-warning {
+            background-color: var(--warning);
+            border-color: var(--warning);
+        }
+        .btn-danger {
+            background-color: var(--danger);
+            border-color: var(--danger);
+        }
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        .btn-outline-success {
+            color: var(--success);
+            border-color: var(--success);
+        }
+        .btn-outline-success:hover {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+
+        /* Card styling */
+        .card {
+            border-radius: 0.75rem;
+            overflow: hidden;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        .card-header {
+            background-color: var(--primary);
+            color: white;
+            border-bottom: none;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Table styling */
+        .table {
+            border-radius: 0.75rem;
+            overflow: hidden; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            background-color: white;
+        }
+        .table th {
+            position: sticky; 
+            top: 0; 
+            background-color: var(--primary) !important;
+            color: white;
+            font-weight: 600;
+            border-color: var(--primary-light);
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(74, 124, 89, 0.1) !important;
+        }
+        .table td {
+            vertical-align: middle;
+        }
+
+        /* Badge styling */
+        .badge.bg-success {
+            background-color: var(--success) !important;
+        }
+        .badge.bg-secondary {
+            background-color: var(--secondary) !important;
+        }
+
+        /* Modal styling */
+        .modal-dialog { 
+            max-width: 800px; 
+        }
+        .modal-header {
+            background-color: var(--primary);
+            color: white;
+            border-bottom: none;
+        }
+        .modal-header .btn-close {
+            color: white;
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .table-responsive {
+                border-radius: 0.75rem;
+                overflow: hidden;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }
+            
+            .table-card {
+                margin-bottom: 1rem;
+                border-radius: 0.75rem;
+                overflow: hidden;
+                background-color: white;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+            }
+            .table-card-body {
+                padding: 1rem;
+            }
+            .table-card-label {
+                font-weight: 600;
+                color: var(--primary);
+                margin-bottom: 0.25rem;
+            }
+            .table-card-value {
+                margin-bottom: 0.75rem;
+            }
+            
+            .btn-group-sm .btn {
+                padding: 0.5rem;
+            }
+            
+            /* Fix horizontal scrolling on mobile */
+            .container {
+                max-width: 100%;
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Plant Tracker</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="bi bi-house"></i> Home</a>
+                    </li>
+                    <!-- Seeds Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-collection"></i> Seeds
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/seeds"><i class="bi bi-list"></i> View Seeds</a></li>
+                            <li><a class="dropdown-item" href="/seeds/new"><i class="bi bi-plus-circle"></i> Add Manually</a></li>
+                            <li><a class="dropdown-item" href="/seed-packets/upload"><i class="bi bi-camera"></i> Scan Packet</a></li>
+                        </ul>
+                    </li>
+                    <!-- Plantings Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-flower1"></i> Plantings
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/plantings"><i class="bi bi-list"></i> View Plantings</a></li>
+                            <li><a class="dropdown-item" href="/plantings/new"><i class="bi bi-plus-circle"></i> New Planting</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Initialize all tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

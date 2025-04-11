@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}New Planting - Plant Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .custom-file-label::after {
+        content: "Browse";
+    }
+    .form-section {
+        margin-bottom: 1.5rem;
+    }
+    .file-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Back button -->
+    <div class="mb-4">
+        <a href="/plantings" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Plantings
+        </a>
+    </div>
+    
+    <h1 class="mb-4">Start New Planting</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form action="/plantings/" method="post" enctype="multipart/form-data">
+                <div class="form-section">
+                    <div class="row mb-3">
+                        <!-- Name -->
+                        <div class="col-md-12">
+                            <label for="name" class="form-label">Name *</label>
+                            <input type="text" id="name" name="name" required
+                                class="form-control"
+                                placeholder="E.g., Backyard Tomatoes 2025">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <!-- Seed Selection -->
+                        <div class="col-md-8">
+                            <label for="seed_id" class="form-label">Seed</label>
+                            <select id="seed_id" name="seed_id"
+                                class="form-select"
+                                onchange="populateSeedData(this.value)">
+                                <option value="">-- Select Seed --</option>
+                                {% for seed in seeds %}
+                                    <option value="{{ seed.id }}">{{ seed.name }}{% if seed.variety %} - {{ seed.variety }}{% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Planting Date -->
+                        <div class="col-md-4">
+                            <label for="planting_date" class="form-label">Planting Date</label>
+                            <input type="date" id="planting_date" name="planting_date"
+                                class="form-control">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="row mb-3">
+                        <!-- Seeds Planted -->
+                        <div class="col-md-6">
+                            <label for="seeds_planted" class="form-label">Seeds Planted</label>
+                            <input type="number" id="seeds_planted" name="seeds_planted" min="1"
+                                class="form-control"
+                                placeholder="Number of seeds">
+                        </div>
+                        
+                        <!-- Image Upload -->
+                        <div class="col-md-6">
+                            <label for="image" class="form-label">Image</label>
+                            <div class="input-group">
+                                <input type="file" class="form-control" id="image" name="image" accept="image/*" onchange="updateFileName(this)">
+                                <label class="input-group-text" for="image">Upload</label>
+                            </div>
+                            <small id="file-name" class="form-text text-muted file-name">No file chosen</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="row mb-3">
+                        <!-- Expected Germination Time -->
+                        <div class="col-md-6">
+                            <label for="expected_germination_time" class="form-label">Expected Germination (days)</label>
+                            <input type="number" id="expected_germination_time" name="expected_germination_time" min="1"
+                                class="form-control"
+                                placeholder="Days until germination">
+                        </div>
+                        
+                        <!-- Expected Maturity Time -->
+                        <div class="col-md-6">
+                            <label for="expected_maturity_time" class="form-label">Expected Maturity (days)</label>
+                            <input type="number" id="expected_maturity_time" name="expected_maturity_time" min="1"
+                                class="form-control"
+                                placeholder="Days until maturity">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-section">
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea id="notes" name="notes" rows="3"
+                            class="form-control"
+                            placeholder="Any additional notes about this planting..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- Submit button -->
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        Create Planting
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Set today's date as default value for the date input
+    document.addEventListener('DOMContentLoaded', function() {
+        // Format today's date as YYYY-MM-DD for the date input
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+        
+        // Set the date input's value
+        document.getElementById('planting_date').value = formattedDate;
+
+        // Check if there's a seed_id in the URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const seedId = urlParams.get('seed_id');
+        
+        // If seed_id parameter exists, select that seed and populate data
+        if (seedId) {
+            const seedSelect = document.getElementById('seed_id');
+            seedSelect.value = seedId;
+            
+            // Populate the form with the seed data
+            populateSeedData(seedId);
+        }
+    });
+
+    function updateFileName(input) {
+        const fileName = input.files.length > 0 ? input.files[0].name : 'No file chosen';
+        document.getElementById('file-name').textContent = fileName;
+    }
+    
+    function populateSeedData(seedId) {
+        if (!seedId) {
+            // Clear fields if no seed is selected
+            document.getElementById('expected_germination_time').value = '';
+            document.getElementById('expected_maturity_time').value = '';
+            document.getElementById('notes').value = '';
+            return;
+        }
+        
+        // Create a timeout for the fetch
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timed out')), 5000);
+        });
+        
+        // Fetch seed data from API with a timeout
+        Promise.race([
+            fetch(`/seeds/api/${seedId}`),
+            timeoutPromise
+        ])
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch seed data: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Auto-populate fields from seed data
+                if (data.maturity) {
+                    document.getElementById('expected_maturity_time').value = data.maturity;
+                }
+                
+                // Add germination time if available
+                if (data.germination) {
+                    document.getElementById('expected_germination_time').value = data.germination;
+                }
+                
+                // Set a default name based on the seed
+                const nameField = document.getElementById('name');
+                if (!nameField.value && data.name) {
+                    const today = new Date();
+                    const year = today.getFullYear();
+                    nameField.value = `${data.name}${data.variety ? ' - ' + data.variety : ''} (${year})`;
+                }
+                
+                // Add seed-specific notes if available
+                const notesField = document.getElementById('notes');
+                if (!notesField.value) {
+                    let seedNotes = '';
+                    if (data.seed_depth) {
+                        seedNotes += `Plant at ${data.seed_depth}" depth. `;
+                    }
+                    if (data.spacing) {
+                        seedNotes += `Space ${data.spacing}" apart. `;
+                    }
+                    if (data.growth) {
+                        seedNotes += `\n\n${data.growth}`;
+                    }
+                    if (seedNotes) {
+                        notesField.value = seedNotes;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching seed data:', error);
+                // Continue with the form even if seed data couldn't be loaded
+                alert('Could not load seed data automatically. You can still fill in the form manually.');
+            });
+    }
+</script>
+{% endblock %}
