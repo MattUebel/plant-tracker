@@ -5,7 +5,7 @@
 set -e
 
 # Configuration variables - adjust these as needed
-REPO_URL="https://github.com/yourusername/plant-tracker.git"
+REPO_URL="https://github.com/MattUebel/plant-tracker.git"
 INSTALL_DIR="/opt/plant-tracker"
 SERVICE_NAME="plant-tracker"
 ENV_FILE="${INSTALL_DIR}/.env"
