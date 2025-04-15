@@ -1,8 +1,10 @@
 import os
 import sys
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 # Add current directory to Python path to ensure imports work in Docker
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -15,6 +17,9 @@ from routers.images import router as images_router
 from routers.seed_images import router as seed_images_router
 from routers.plantings import router as plantings_router
 from routers.seed_packets import router as seed_packets_router  # Add new router
+from models.seed import Seed
+from models.planting import Planting
+from database import get_db
 
 # Load environment variables
 load_dotenv()
@@ -40,9 +45,29 @@ app.include_router(seed_packets_router, tags=["seed_packets"])  # Add new router
 
 
 @app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
+async def root(request: Request, db: AsyncSession = Depends(get_db)):
+    # Fetch 3 most recently updated/created seeds
+    seeds_result = await db.execute(
+        select(Seed).order_by(Seed.updated_at.desc(), Seed.created_at.desc()).limit(3)
+    )
+    recent_seeds = seeds_result.unique().scalars().all()
+
+    # Fetch 3 most recently updated/created plantings
+    plantings_result = await db.execute(
+        select(Planting)
+        .order_by(Planting.updated_at.desc(), Planting.created_at.desc())
+        .limit(3)
+    )
+    recent_plantings = plantings_result.unique().scalars().all()
+
     return templates.TemplateResponse(
-        "index.html", {"request": request, "title": "Plant Tracker"}
+        "index.html",
+        {
+            "request": request,
+            "title": "Plant Tracker",
+            "recent_seeds": recent_seeds,
+            "recent_plantings": recent_plantings,
+        },
     )
 
 

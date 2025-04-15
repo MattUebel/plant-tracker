@@ -3,58 +3,95 @@
 {% block title %}{{ title }} - Plant Tracker{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="text-center mb-5">
-        <h1 class="mb-3">Welcome to Plant Tracker</h1>
-        <p class="lead">A simple application to track your seeds and plants.</p>
+<div class="container py-3">
+    <!-- Mobile-first Action Buttons -->
+    <div class="row g-2 mb-4 justify-content-center">
+        <div class="col-6 col-md-4 col-lg-2 d-grid mb-2">
+            <a href="/seeds" class="btn btn-primary btn-lg py-3">
+                <i class="bi bi-list"></i><br>View Seeds
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2 d-grid mb-2">
+            <a href="/seeds/new" class="btn btn-outline-primary btn-lg py-3">
+                <i class="bi bi-plus-circle"></i><br>Add Seed
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2 d-grid mb-2">
+            <a href="/seed-packets/upload" class="btn btn-outline-success btn-lg py-3">
+                <i class="bi bi-camera"></i><br>Scan Packet
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2 d-grid mb-2">
+            <a href="/plantings" class="btn btn-success btn-lg py-3">
+                <i class="bi bi-flower1"></i><br>View Plantings
+            </a>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2 d-grid mb-2">
+            <a href="/plantings/new" class="btn btn-outline-success btn-lg py-3">
+                <i class="bi bi-plus-circle"></i><br>New Planting
+            </a>
+        </div>
     </div>
-    
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <!-- Seeds Section (Consolidated) -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light d-flex align-items-center">
-                    <i class="bi bi-collection fs-4 text-primary me-2"></i>
-                    <h4 class="mb-0">Seeds</h4>
-                </div>
-                <div class="card-body text-center py-4">
-                    <i class="bi bi-collection fs-1 text-primary mb-3"></i>
-                    <h5>Seed Management</h5>
-                    <p class="text-muted mb-3">Track your seed collection</p>
-                    <div class="d-flex justify-content-center gap-3 flex-wrap">
-                        <a href="/seeds" class="btn btn-primary">
-                            <i class="bi bi-list"></i> View Seeds
-                        </a>
-                        <a href="/seeds/new" class="btn btn-outline-primary">
-                            <i class="bi bi-plus-circle"></i> Add Manually
-                        </a>
-                        <a href="/seed-packets/upload" class="btn btn-outline-success">
-                            <i class="bi bi-camera"></i> Scan Packet
-                        </a>
+
+    <!-- Recent Seeds Section -->
+    <div class="mb-4">
+        <h4 class="mb-3"><i class="bi bi-collection text-primary me-2"></i>Recent Seeds</h4>
+        <div class="row g-2">
+            {% for seed in recent_seeds %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body py-2 d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            {% if seed.images and seed.images|length > 0 %}
+                                <img src="/uploads/{{ seed.images[0].filename }}" alt="Seed Image" class="rounded" style="width:48px;height:48px;object-fit:cover;">
+                            {% else %}
+                                <i class="bi bi-seedling fs-1 text-secondary"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <a href="/seeds/{{ seed.id }}" class="fw-bold text-decoration-none">{{ seed.name }}</a>
+                            {% if seed.variety %}<div class="text-muted small">{{ seed.variety }}</div>{% endif %}
+                            {% if seed.brand %}<div class="text-muted small">{{ seed.brand }}</div>{% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Plantings Section -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light d-flex align-items-center">
-                    <i class="bi bi-flower1 fs-4 text-success me-2"></i>
-                    <h4 class="mb-0">Plantings</h4>
-                </div>
-                <div class="card-body text-center py-4">
-                    <i class="bi bi-flower1 fs-1 text-success mb-3"></i>
-                    <h5>Growing Tracker</h5>
-                    <p class="text-muted mb-3">Monitor your garden progress</p>
-                    <div class="d-flex justify-content-center gap-3">
-                        <a href="/plantings" class="btn btn-primary">
-                            <i class="bi bi-list"></i> View Plantings
-                        </a>
-                        <a href="/plantings/new" class="btn btn-outline-success">
-                            <i class="bi bi-plus-circle"></i> New Planting
-                        </a>
+            {% else %}
+            <div class="col-12">
+                <div class="alert alert-secondary text-center mb-0">No recent seeds found.</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Plantings Section -->
+    <div class="mb-4">
+        <h4 class="mb-3"><i class="bi bi-flower1 text-success me-2"></i>Recent Plantings</h4>
+        <div class="row g-2">
+            {% for planting in recent_plantings %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body py-2 d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                            {% if planting.images and planting.images|length > 0 %}
+                                <img src="/uploads/{{ planting.images[0].filename }}" alt="Planting Image" class="rounded" style="width:48px;height:48px;object-fit:cover;">
+                            {% else %}
+                                <i class="bi bi-flower1 fs-1 text-secondary"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <a href="/plantings/{{ planting.id }}" class="fw-bold text-decoration-none">{{ planting.name }}</a>
+                            {% if planting.seed and planting.seed.name %}<div class="text-muted small">Seed: {{ planting.seed.name }}</div>{% endif %}
+                            {% if planting.planting_date %}<div class="text-muted small">Planted: {{ planting.planting_date }}</div>{% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
+            {% else %}
+            <div class="col-12">
+                <div class="alert alert-secondary text-center mb-0">No recent plantings found.</div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
@@ -64,12 +101,11 @@
 <!-- Bootstrap icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
-    .card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    .btn-lg { font-size: 1.15rem; }
+    .card { transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.10)!important; }
+    @media (max-width: 576px) {
+        .btn-lg { font-size: 1rem; padding: 1.25rem 0.5rem; }
     }
 </style>
 {% endblock %}
