@@ -148,66 +148,28 @@ async def create_seed_from_preview(
     name: str = Form(...),
     variety: Optional[str] = Form(None),
     brand: Optional[str] = Form(None),
-    germination_rate: Optional[str] = Form(
-        None
-    ),  # Changed to str to handle empty values
-    maturity: Optional[str] = Form(None),  # Changed to str to handle empty values
-    seed_depth: Optional[str] = Form(None),  # Changed to str to handle empty values
-    spacing: Optional[str] = Form(None),  # Changed to str to handle empty values
+    seed_depth: Optional[str] = Form(None),
+    spacing: Optional[str] = Form(None),
     notes: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
 ):
     """Create a seed record from the preview data with user modifications."""
     try:
-        # Debug information
-        print(f"Creating seed from preview with file_path: {file_path}")
-        print(f"Form data: name={name}, variety={variety}, brand={brand}")
-        print(
-            f"Form numeric fields: germination_rate={germination_rate}, maturity={maturity}, seed_depth={seed_depth}, spacing={spacing}"
+        # Parse numeric fields that might be empty strings
+        parsed_seed_depth = (
+            float(seed_depth) if seed_depth and seed_depth.strip() else None
         )
+        parsed_spacing = float(spacing) if spacing and spacing.strip() else None
 
-        # Handle numeric fields that might be empty strings
-        parsed_germination_rate = None
-        if germination_rate and germination_rate.strip():
-            try:
-                parsed_germination_rate = float(germination_rate)
-            except (ValueError, TypeError):
-                parsed_germination_rate = None
-
-        parsed_maturity = None
-        if maturity and maturity.strip():
-            try:
-                parsed_maturity = int(maturity)
-            except (ValueError, TypeError):
-                parsed_maturity = None
-
-        parsed_seed_depth = None
-        if seed_depth and seed_depth.strip():
-            try:
-                parsed_seed_depth = float(seed_depth)
-            except (ValueError, TypeError):
-                parsed_seed_depth = None
-
-        parsed_spacing = None
-        if spacing and spacing.strip():
-            try:
-                parsed_spacing = float(spacing)
-            except (ValueError, TypeError):
-                parsed_spacing = None
-
-        # Create new seed with form data (potentially modified by user)
+        # Create new seed with only valid fields
         new_seed = Seed(
             name=name,
             variety=variety,
             brand=brand,
-            germination_rate=parsed_germination_rate,
-            maturity=parsed_maturity,
             seed_depth=parsed_seed_depth,
             spacing=parsed_spacing,
             notes=notes,
         )
-
-        # Save the seed to the database
         db.add(new_seed)
         await db.commit()
         await db.refresh(new_seed)
