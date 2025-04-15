@@ -13,27 +13,77 @@
 </div>
 
 {% if plantings %}
-<div class="table-responsive">
-    <table class="table table-striped table-hover">
-        <thead class="table-light">
-            <tr>
-                <th>Name</th>
-                <th>Seed</th>
-                <th>Planting Date</th>
-                <th>Transplants</th>
-                <th>Last Updated</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for planting in plantings %}
-            <tr style="cursor: pointer" onclick="window.location='/plantings/{{ planting.id }}'">
-                <td>{{ planting.name }}</td>
-                <td>{{ planting.seed.name if planting.seed else "Unknown" }}</td>
-                <td>{{ planting.planting_date|strftime("%b %d, %Y") if planting.planting_date else "Not recorded" }}</td>
-                <td>{{ planting.transplant_events|length if planting.transplant_events else 0 }}</td>
-                <td>{{ planting.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                <td onclick="event.stopPropagation()">
+<!-- Desktop/tablet view: Table -->
+<div class="d-none d-md-block">
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Seed</th>
+                    <th>Planting Date</th>
+                    <th>Transplants</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for planting in plantings %}
+                <tr style="cursor: pointer" onclick="window.location='/plantings/{{ planting.id }}'">
+                    <td>{{ planting.name }}</td>
+                    <td>{{ planting.seed.name if planting.seed else "Unknown" }}</td>
+                    <td>{{ planting.planting_date|strftime("%b %d, %Y") if planting.planting_date else "Not recorded" }}</td>
+                    <td>{{ planting.transplant_events|length if planting.transplant_events else 0 }}</td>
+                    <td>{{ planting.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td onclick="event.stopPropagation()">
+                        <div class="btn-group btn-group-sm">
+                            <a href="/plantings/{{ planting.id }}" class="btn btn-info" data-bs-toggle="tooltip" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="/plantings/{{ planting.id }}/edit" class="btn btn-warning" data-bs-toggle="tooltip" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ planting.id }}" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                        <!-- Delete Confirmation Modal -->
+                        <div class="modal fade" id="deleteModal{{ planting.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirm Deletion</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Are you sure you want to delete the planting: <strong>{{ planting.name }}</strong>?</p>
+                                        <p>This action cannot be undone.</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <form method="post" action="/plantings/{{ planting.id }}/delete" style="display:inline;">
+                                            <button type="submit" class="btn btn-danger">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Mobile view: Cards -->
+<div class="d-md-none">
+    {% for planting in plantings %}
+    <div class="table-card" onclick="window.location='/plantings/{{ planting.id }}'">
+        <div class="table-card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">{{ planting.name }}</h5>
+                <div onclick="event.stopPropagation()">
                     <div class="btn-group btn-group-sm">
                         <a href="/plantings/{{ planting.id }}" class="btn btn-info" data-bs-toggle="tooltip" title="View Details">
                             <i class="bi bi-eye"></i>
@@ -41,37 +91,68 @@
                         <a href="/plantings/{{ planting.id }}/edit" class="btn btn-warning" data-bs-toggle="tooltip" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ planting.id }}" title="Delete">
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModalMobile{{ planting.id }}" title="Delete">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
-                    
-                    <!-- Delete Confirmation Modal -->
-                    <div class="modal fade" id="deleteModal{{ planting.id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Confirm Deletion</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <p>Are you sure you want to delete the planting: <strong>{{ planting.name }}</strong>?</p>
-                                    <p>This action cannot be undone.</p>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <form method="post" action="/plantings/{{ planting.id }}/delete" style="display:inline;">
-                                        <button type="submit" class="btn btn-danger">Delete</button>
-                                    </form>
-                                </div>
-                            </div>
+                </div>
+            </div>
+            <div class="row mb-1">
+                <div class="col-5">
+                    <div class="table-card-label">Seed:</div>
+                </div>
+                <div class="col-7">
+                    <div class="table-card-value">{{ planting.seed.name if planting.seed else "Unknown" }}</div>
+                </div>
+            </div>
+            <div class="row mb-1">
+                <div class="col-5">
+                    <div class="table-card-label">Planting Date:</div>
+                </div>
+                <div class="col-7">
+                    <div class="table-card-value">{{ planting.planting_date|strftime("%b %d, %Y") if planting.planting_date else "Not recorded" }}</div>
+                </div>
+            </div>
+            <div class="row mb-1">
+                <div class="col-5">
+                    <div class="table-card-label">Transplants:</div>
+                </div>
+                <div class="col-7">
+                    <div class="table-card-value">{{ planting.transplant_events|length if planting.transplant_events else 0 }}</div>
+                </div>
+            </div>
+            <div class="row mb-1">
+                <div class="col-5">
+                    <div class="table-card-label">Last Updated:</div>
+                </div>
+                <div class="col-7">
+                    <div class="table-card-value">{{ planting.updated_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                </div>
+            </div>
+            <!-- Mobile Delete Confirmation Modal -->
+            <div class="modal fade" id="deleteModalMobile{{ planting.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirm Deletion</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete the planting: <strong>{{ planting.name }}</strong>?</p>
+                            <p>This action cannot be undone.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <form method="post" action="/plantings/{{ planting.id }}/delete" style="display:inline;">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
                         </div>
                     </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% else %}
 <div class="alert alert-info">
