@@ -220,23 +220,15 @@ class GeminiVisionTester(GeminiAPICaller):
             Dict containing the structured seed packet data
         """
         prompt = """
-        I need you to analyze this seed packet image carefully and extract specific information for a garden planting database.
-
-        First, tell me what you see in this image - what type of seeds are shown on this packet?
-
-        Then, extract the following information in a structured JSON format:
-        - name: The main plant type (e.g., "Tomato", "Basil", "Carrot")
-        - variety: The specific variety name (e.g., "Cherry Sweet", "Genovese", "Nantes")
+        Analyze this seed packet image and extract the following information as a JSON object:
+        - name: The main plant type (e.g., 'Tomato', 'Basil', 'Carrot')
+        - variety: The specific variety name (e.g., 'Cherry Sweet', 'Genovese', 'Nantes')
         - brand: The company/manufacturer of the seed packet
-        - germination_rate: The germination rate as a decimal (convert from percentage if needed, e.g., 85% → 0.85)
-        - maturity: Days to maturity/harvest as an integer number only
-        - growth: Growth habit (e.g., "Determinate", "Bush", "Vining", "Upright")
         - seed_depth: Recommended planting depth in inches (convert from other units if needed)
         - spacing: Recommended spacing between plants in inches (convert from other units if needed)
-        - quantity: Number of seeds in the packet if mentioned
-        - notes: Any special growing instructions, sun/water requirements, or other important information
+        - notes: Any special growing instructions or other important information
 
-        Return ONLY a valid JSON object matching the schema above. Use null for any fields not found in the image.
+        Return ONLY a valid JSON object with these fields. Use null for any fields not found in the image.
         """
 
         response = await self.call_api_with_retry(image_path, prompt)
@@ -356,9 +348,9 @@ class GeminiVisionTester(GeminiAPICaller):
                         "name",
                         "variety",
                         "brand",
-                        "maturity",
                         "seed_depth",
                         "spacing",
+                        "notes",
                     ]
                     missing_fields = [
                         field

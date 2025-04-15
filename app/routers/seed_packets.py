@@ -78,10 +78,8 @@ async def process_seed_packet(
         image_data = await seed_packet.read()
 
         # Process the seed packet using our centralized processor
-        structured_data, file_path = (
-            await seed_packet_processor.process_seed_packet(
-                image_data, filename=seed_packet.filename
-            )
+        structured_data, file_path = await seed_packet_processor.process_seed_packet(
+            image_data, filename=seed_packet.filename
         )
 
         # Debug the extracted data
@@ -130,7 +128,9 @@ async def process_seed_packet(
                 "request": request,
                 "title": "Upload Seed Packet",
                 "error": f"Error processing seed packet: {error_message}",
-                "retry_image_data": image_data.hex() if 'image_data' in locals() else None,
+                "retry_image_data": (
+                    image_data.hex() if "image_data" in locals() else None
+                ),
                 "original_filename": seed_packet.filename,
                 "mime_type": seed_packet.content_type,
             },
@@ -149,10 +149,8 @@ async def retry_extraction(
     """Retry structured data extraction using the original uploaded image data (hex-encoded)."""
     try:
         image_data = bytes.fromhex(image_data_hex)
-        structured_data, file_path = (
-            await seed_packet_processor.process_seed_packet(
-                image_data, filename=original_filename
-            )
+        structured_data, file_path = await seed_packet_processor.process_seed_packet(
+            image_data, filename=original_filename
         )
         preview_seed = {
             "name": structured_data.get("name", "Unknown Seed"),

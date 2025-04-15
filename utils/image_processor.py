@@ -674,26 +674,15 @@ class ImageProcessor:
 
             # Now extract structured data with a clear JSON response format
             structured_prompt = """
-            Analyze this seed packet image and extract the following information.
-            YOUR RESPONSE MUST BE ONLY A VALID JSON OBJECT with no other text.
-            
-            Use this exact format:
-            {
-                "name": "The main plant type (e.g., Tomato, Basil, Carrot)",
-                "variety": "The specific variety name",
-                "brand": "The company/manufacturer of the seed packet",
-                "germination_rate": "The germination rate as a decimal (convert from percentage if needed)",
-                "maturity": "Days to maturity/harvest as an integer number only",
-                "growth": "Growth habit description",
-                "seed_depth": "Recommended planting depth in inches",
-                "spacing": "Recommended spacing between plants in inches",
-                "notes": "Any special growing instructions or other important information"
-            }
-            
-            Use null for any fields not found in the image.
-            DO NOT include any text before or after the JSON object.
-            DO NOT use markdown code blocks.
-            ONLY return the JSON object.
+            Analyze this seed packet image and extract the following information as a JSON object:
+            - name: The main plant type (e.g., 'Tomato', 'Basil', 'Carrot')
+            - variety: The specific variety name (e.g., 'Cherry Sweet', 'Genovese', 'Nantes')
+            - brand: The company/manufacturer of the seed packet
+            - seed_depth: Recommended planting depth in inches (convert from other units if needed)
+            - spacing: Recommended spacing between plants in inches (convert from other units if needed)
+            - notes: Any special growing instructions or other important information
+
+            Return ONLY a valid JSON object with these fields. Use null for any fields not found in the image.
             """
 
             # Make the API call for structured data

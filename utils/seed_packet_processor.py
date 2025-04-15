@@ -8,6 +8,7 @@ import logging
 import datetime
 import uuid
 import json
+import time
 from typing import Tuple, Dict, Any, Optional
 
 # Import the existing image processor
@@ -64,6 +65,7 @@ class SeedPacketProcessor:
         """
         try:
             logger.info(f"Processing seed packet image: {filename}")
+            total_start = time.perf_counter()
 
             # Generate a unique filename
             timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
@@ -73,20 +75,30 @@ class SeedPacketProcessor:
             file_path = os.path.join(self.upload_dir, new_filename)
 
             # Save the image to disk
+            save_start = time.perf_counter()
             with open(file_path, "wb") as f:
                 f.write(image_data)
+            save_end = time.perf_counter()
+            logger.info(
+                f"Saved image to {file_path} (save time: {save_end-save_start:.2f}s)"
+            )
 
-            logger.info(f"Saved image to {file_path}, now processing with Vision API")
-
-            # Process the image with the Vision API
+            # Preprocessing (if any) is handled in image_processor
+            vision_start = time.perf_counter()
             try:
-                # Only extract structured data (no OCR text)
-                _, structured_data = await image_processor.process_image_with_vision_api(file_path)
-                logger.info(
-                    f"Structured data extracted: {json.dumps(structured_data)[:200]}..."
+                _, structured_data = (
+                    await image_processor.process_image_with_vision_api(file_path)
                 )
+                vision_end = time.perf_counter()
+                logger.info(
+                    f"Structured data extracted (Gemini API call time: {vision_end-vision_start:.2f}s)"
+                )
+                logger.info(f"Structured data: {json.dumps(structured_data)[:200]}...")
             except Exception as e:
-                logger.error(f"Error during vision API processing: {str(e)}")
+                vision_end = time.perf_counter()
+                logger.error(
+                    f"Error during vision API processing: {str(e)} (Gemini API call time: {vision_end-vision_start:.2f}s)"
+                )
                 structured_data = None
 
             if not structured_data:
@@ -99,6 +111,11 @@ class SeedPacketProcessor:
 
             # Ensure all required fields exist with defaults if needed
             structured_data = self._process_structured_data(structured_data)
+
+            total_end = time.perf_counter()
+            logger.info(
+                f"Total seed packet processing time: {total_end-total_start:.2f}s"
+            )
 
             return structured_data, file_path
 
