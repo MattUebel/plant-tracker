@@ -581,98 +581,58 @@ class ImageProcessor:
 
     async def _process_with_gemini(
         self, image_path: str
-    ) -> Tuple[str, Optional[Dict[str, Any]]]:
-        """Process image using Gemini Vision API following best practices from documentation"""
+    ) -> Tuple[None, Optional[Dict[str, Any]]]:
+        """Process image using Gemini Vision API for structured data only (no OCR step)."""
         if not self.gemini_api_key or not GEMINI_AVAILABLE:
             error_msg = (
                 "Gemini API key not set or google-generativeai package not installed"
             )
             logger.error(error_msg)
-            return error_msg, None
+            return None, None
 
         try:
-            # Process the image to fit within Gemini's size limits
-            logger.info(f"Processing image for Gemini API: {image_path}")
-
-            # Image preparation following best practices
+            logger.info(
+                f"[Gemini] Starting structured data extraction for: {image_path}"
+            )
+            # Image preparation
             from io import BytesIO
             from PIL import Image
 
+            prep_start = asyncio.get_event_loop().time()
             try:
                 with Image.open(image_path) as img:
-                    # Convert to RGB if needed (recommended in docs)
                     if img.mode in ("RGBA", "LA") or (
                         img.mode == "P" and "transparency" in img.info
                     ):
                         img = img.convert("RGB")
-
-                    # Start with original dimensions
                     width, height = img.size
-                    quality = 90  # Recommended starting point in docs
-
-                    # Create a BytesIO object to check size without saving to disk
+                    quality = 90
                     img_byte_arr = BytesIO()
                     img.save(img_byte_arr, format="JPEG", quality=quality)
                     current_size = img_byte_arr.tell()
-
-                    # Iteratively reduce size until under limit (4.5MB to be safe)
                     max_size_bytes = 4.5 * 1024 * 1024
                     while current_size > max_size_bytes:
                         if quality > 50:
-                            # First try reducing quality
                             quality -= 10
                         else:
-                            # Then try reducing dimensions
                             width = int(width * 0.9)
                             height = int(height * 0.9)
                             img = img.resize((width, height), Image.Resampling.LANCZOS)
-
-                        # Check new size
                         img_byte_arr = BytesIO()
                         img.save(img_byte_arr, format="JPEG", quality=quality)
                         current_size = img_byte_arr.tell()
-
-                    # Keep a copy of the processed image
                     img_byte_arr.seek(0)
                     processed_img = Image.open(img_byte_arr)
-
                     logger.info(
-                        f"Successfully processed image: size={current_size/1024/1024:.2f}MB, dimensions={width}x{height}"
+                        f"[Gemini] Image ready: size={current_size/1024/1024:.2f}MB, dimensions={width}x{height}"
                     )
             except Exception as img_error:
-                logger.error(f"Error processing image file: {str(img_error)}")
-                return f"Error processing image: {str(img_error)}", None
+                logger.error(f"[Gemini] Error processing image file: {str(img_error)}")
+                return None, None
+            prep_end = asyncio.get_event_loop().time()
+            logger.info(f"[Gemini] Image preparation time: {prep_end-prep_start:.2f}s")
 
-            # First - direct OCR extraction for text only
-            ocr_prompt = """
-            Perform OCR on this seed packet image. 
-            Extract ALL text visible in the image, preserving the layout as much as possible.
-            Include all product information, instructions, and details exactly as they appear.
-            Focus only on the text content - do not analyze or interpret the information.
-            """
-
-            # Make OCR request first to get raw text
-            logger.info("Sending OCR request to Gemini API")
-            try:
-                ocr_response = await asyncio.to_thread(
-                    self.gemini_model_instance.generate_content,
-                    [ocr_prompt, processed_img],
-                    generation_config={"temperature": 0.1, "max_output_tokens": 2048},
-                )
-
-                if hasattr(ocr_response, "text"):
-                    ocr_text = ocr_response.text
-                    logger.info(
-                        f"Successfully extracted OCR text: {len(ocr_text)} chars"
-                    )
-                else:
-                    ocr_text = "Failed to extract OCR text from image"
-                    logger.warning("OCR text extraction failed")
-            except Exception as ocr_error:
-                logger.error(f"Error in OCR extraction: {str(ocr_error)}")
-                ocr_text = f"OCR extraction error: {str(ocr_error)}"
-
-            # Now extract structured data with a clear JSON response format
+            # Structured data extraction
             structured_prompt = """
             Analyze this seed packet image and extract the following information as a JSON object:
             - name: The main plant type (e.g., 'Tomato', 'Basil', 'Carrot')
@@ -684,9 +644,10 @@ class ImageProcessor:
 
             Return ONLY a valid JSON object with these fields. Use null for any fields not found in the image.
             """
-
-            # Make the API call for structured data
-            logger.info("Sending structured data extraction request to Gemini API")
+            logger.info(
+                f"[Gemini] Sending structured data extraction request to Gemini API"
+            )
+            gemini_start = asyncio.get_event_loop().time()
             try:
                 structured_response = await asyncio.to_thread(
                     self.gemini_model_instance.generate_content,
@@ -695,68 +656,53 @@ class ImageProcessor:
                         "temperature": 0.1,
                         "top_p": 0.95,
                         "max_output_tokens": 1024,
-                        "response_mime_type": "application/json",  # Request JSON format
+                        "response_mime_type": "application/json",
                     },
                 )
-
-                logger.info(f"Received response from Gemini API")
-
-                # Handle empty candidates - this is the specific error we're fixing
+                gemini_end = asyncio.get_event_loop().time()
+                logger.info(
+                    f"[Gemini] Gemini API call time: {gemini_end-gemini_start:.2f}s"
+                )
                 if not hasattr(structured_response, "text"):
-                    logger.warning("Empty response from Gemini API (no candidates)")
-                    return ocr_text, self._create_fallback_data(
+                    logger.warning(
+                        "[Gemini] Empty response from Gemini API (no candidates)"
+                    )
+                    return None, self._create_fallback_data(
                         "Error during structured data extraction: The model returned an empty response. Please enter details manually."
                     )
-
-                # Extract and clean the response text
                 response_text = structured_response.text
-                logger.info(f"Got response from Gemini ({len(response_text)} chars)")
-
-                # Clean the text to extract just the JSON portion
+                logger.info(
+                    f"[Gemini] Got response from Gemini ({len(response_text)} chars)"
+                )
                 json_str = self._extract_json_from_text(response_text)
-
                 if json_str:
                     try:
                         structured_data = json.loads(json_str)
-                        logger.info("Successfully parsed structured data JSON")
-
-                        # Validate and provide defaults for missing required fields
+                        logger.info("[Gemini] Successfully parsed structured data JSON")
                         structured_data = self._validate_seed_data(structured_data)
-                        return ocr_text, structured_data
-
+                        return None, structured_data
                     except json.JSONDecodeError as json_err:
-                        logger.error(f"Failed to parse JSON: {str(json_err)}")
-                        logger.debug(f"Problematic JSON string: {json_str}")
-                        # Return OCR text with fallback data
-                        return ocr_text, self._create_fallback_data(
-                            "Couldn't parse structured data from image. Please review OCR text and enter details manually."
+                        logger.error(f"[Gemini] Failed to parse JSON: {str(json_err)}")
+                        logger.debug(f"[Gemini] Problematic JSON string: {json_str}")
+                        return None, self._create_fallback_data(
+                            "Couldn't parse structured data from image. Please enter details manually."
                         )
                 else:
-                    logger.warning("No valid JSON found in Gemini response")
-                    return ocr_text, self._create_fallback_data(
-                        "No structured data found in the response. Please review OCR text and enter details manually."
+                    logger.warning("[Gemini] No valid JSON found in Gemini response")
+                    return None, self._create_fallback_data(
+                        "No structured data found in the response. Please enter details manually."
                     )
-
             except Exception as api_error:
-                # Specifically catch and handle the empty candidates error
                 error_message = str(api_error)
-                if "response.candidates` is empty" in error_message:
-                    logger.warning("Gemini API returned empty candidates")
-                    return ocr_text, self._create_fallback_data(
-                        "Error during structured data extraction: Invalid operation with empty response candidates. Please enter details manually."
-                    )
-
                 logger.error(
-                    f"Error calling Gemini API for structured data: {error_message}"
+                    f"[Gemini] Error calling Gemini API for structured data: {error_message}"
                 )
-                # Return OCR text with fallback data
-                return ocr_text, self._create_fallback_data(
+                return None, self._create_fallback_data(
                     f"Error during structured data extraction: {error_message}. Please enter details manually."
                 )
-
         except Exception as e:
-            logger.error(f"Error processing image: {str(e)}", exc_info=True)
-            return f"Error processing image: {str(e)}", None
+            logger.error(f"[Gemini] Error processing image: {str(e)}", exc_info=True)
+            return None, None
 
     def _extract_json_from_text(self, text: str) -> Optional[str]:
         """Extract JSON object from text that may contain markdown or other content"""
