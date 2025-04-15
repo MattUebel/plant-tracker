@@ -302,10 +302,21 @@
                 </div>
                 <div class="card-body">
                     <form action="/plantings/{{ planting.id }}/add-image" method="post" enctype="multipart/form-data">
-                        <div class="input-group">
-                            <input type="file" class="form-control" id="image" name="image" accept="image/*" capture="environment" required
-                                   onchange="updateAddImageFileName(this)">
+                        <div id="image-upload-desktop" class="input-group d-none">
+                            <input type="file" class="form-control" id="image-desktop" name="image" accept="image/*" required onchange="updateAddImageFileName(this)">
                             <button class="btn btn-primary" type="submit">Upload</button>
+                        </div>
+                        <div id="image-upload-mobile" class="d-none">
+                            <div class="mb-2">
+                                <label class="btn btn-primary w-100 mb-2">
+                                    <i class="bi bi-camera"></i> Take Photo
+                                    <input type="file" class="d-none" id="image-camera" name="image" accept="image/*" capture="environment" onchange="updateAddImageFileName(this); this.form.submit();">
+                                </label>
+                                <label class="btn btn-secondary w-100">
+                                    <i class="bi bi-image"></i> Choose from Gallery
+                                    <input type="file" class="d-none" id="image-gallery" name="image" accept="image/*" onchange="updateAddImageFileName(this); this.form.submit();">
+                                </label>
+                            </div>
                         </div>
                         <small id="add-image-file-name" class="form-text text-muted">No file chosen</small>
                     </form>
@@ -418,15 +429,22 @@
 
 {% block extra_js %}
 <script>
-    // Set today's date as default value for the transplant date input
+    // Device detection and UI switching for image upload
     document.addEventListener('DOMContentLoaded', function() {
-        // Format today's date as YYYY-MM-DD for the date input
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        if (isMobile()) {
+            document.getElementById('image-upload-mobile').classList.remove('d-none');
+        } else {
+            document.getElementById('image-upload-desktop').classList.remove('d-none');
+        }
+        // Set today's date as default value for the transplant date input
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
         const formattedDate = `${year}-${month}-${day}`;
-        // Set the date input's value
         document.getElementById('transplant_date').value = formattedDate;
         // Initialize the carousel (no auto-rotation)
         const carousel = document.getElementById('plantingCarousel');
@@ -438,7 +456,6 @@
             });
         }
     });
-
     function updateAddImageFileName(input) {
         const fileName = input.files.length > 0 ? input.files[0].name : 'No file chosen';
         document.getElementById('add-image-file-name').textContent = fileName;
