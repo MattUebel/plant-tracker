@@ -46,11 +46,11 @@
                                 <div id="image-upload-mobile" class="d-none mb-2">
                                     <label class="btn btn-primary w-100 mb-2">
                                         <i class="bi bi-camera"></i> Take Photo
-                                        <input type="file" class="d-none" id="image-camera" name="image" accept="image/*" capture="environment" onchange="updateAddImageFileName(this); this.form.submit();">
+                                        <input type="file" class="d-none" id="image-camera" name="image" accept="image/*" capture="environment" onchange="updateAddImageFileName(this)">
                                     </label>
                                     <label class="btn btn-secondary w-100">
                                         <i class="bi bi-image"></i> Choose from Gallery
-                                        <input type="file" class="d-none" id="image-gallery" name="image" accept="image/*" onchange="updateAddImageFileName(this); this.form.submit();">
+                                        <input type="file" class="d-none" id="image-gallery" name="image" accept="image/*" onchange="updateAddImageFileName(this)">
                                     </label>
                                 </div>
                                 <small id="add-image-file-name" class="form-text text-muted">No file chosen</small>
