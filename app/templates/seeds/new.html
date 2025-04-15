@@ -39,10 +39,21 @@
                             <div class="card-body">
                                 <h5 class="card-title mb-3">Optional: Add Seed Packet Image</h5>
                                 <p class="card-text text-muted mb-3">You can attach an image to your seed record.</p>
-                                <div class="mb-3">
-                                    <label for="image" class="form-label">Seed Packet Image</label>
-                                    <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                <!-- Image Upload Field -->
+                                <div id="image-upload-desktop" class="input-group d-none">
+                                    <input type="file" class="form-control" id="image-desktop" name="image" accept="image/*" onchange="updateAddImageFileName(this)">
                                 </div>
+                                <div id="image-upload-mobile" class="d-none mb-2">
+                                    <label class="btn btn-primary w-100 mb-2">
+                                        <i class="bi bi-camera"></i> Take Photo
+                                        <input type="file" class="d-none" id="image-camera" name="image" accept="image/*" capture="environment" onchange="updateAddImageFileName(this); this.form.submit();">
+                                    </label>
+                                    <label class="btn btn-secondary w-100">
+                                        <i class="bi bi-image"></i> Choose from Gallery
+                                        <input type="file" class="d-none" id="image-gallery" name="image" accept="image/*" onchange="updateAddImageFileName(this); this.form.submit();">
+                                    </label>
+                                </div>
+                                <small id="add-image-file-name" class="form-text text-muted">No file chosen</small>
                                 <div class="form-text mt-2">
                                     <i class="bi bi-lightbulb-fill text-warning"></i>
                                     <strong>Need to extract data automatically?</strong> Use the 
@@ -97,4 +108,24 @@
 {% block extra_css %}
 <!-- Bootstrap icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Device detection and UI switching for image upload
+    document.addEventListener('DOMContentLoaded', function() {
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        if (isMobile()) {
+            document.getElementById('image-upload-mobile').classList.remove('d-none');
+        } else {
+            document.getElementById('image-upload-desktop').classList.remove('d-none');
+        }
+        window.updateAddImageFileName = function(input) {
+            const fileName = input.files.length > 0 ? input.files[0].name : 'No file chosen';
+            document.getElementById('add-image-file-name').textContent = fileName;
+        }
+    });
+</script>
 {% endblock %}
