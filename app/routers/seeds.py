@@ -73,11 +73,12 @@ async def new_seed(request: Request):
 @router.post("/", response_class=HTMLResponse)
 async def create_seed(
     request: Request,
-    name: str = Form(None),
+    name: str = Form(...),
     variety: Optional[str] = Form(None),
+    brand: Optional[str] = Form(None),
     source: Optional[str] = Form(None),
-    maturity_days: Optional[int] = Form(None),
     germination_days: Optional[int] = Form(None),
+    maturity_days: Optional[int] = Form(None),
     planting_depth: Optional[float] = Form(None),
     spacing: Optional[float] = Form(None),
     growing_notes: Optional[str] = Form(None),
@@ -96,30 +97,27 @@ async def create_seed(
                 status_code=422,
             )
 
-        # Create a new seed
+        # Create a new seed (only valid fields for the model)
         new_seed = Seed(
             name=name,
             variety=variety,
-            maturity=maturity_days,  # Using correct field name from the model
-            seed_depth=planting_depth,  # Using correct field name from the model
+            brand=brand,
+            seed_depth=planting_depth,
             spacing=spacing,
+            notes=growing_notes,
         )
 
-        # Use async-compatible SQLAlchemy operations
         db.add(new_seed)
         await db.commit()
         await db.refresh(new_seed)
 
         # Save uploaded image if provided
         if image and image.filename:
-            # Save the image using image_processor
             image_data = await image_processor.save_image(image, "seed", new_seed.id)
-
-            # Create the image record using Image model
             new_image = Image(
                 entity_type="seed",
                 entity_id=new_seed.id,
-                seed_id=new_seed.id,  # Set direct relationship
+                seed_id=new_seed.id,
                 filename=image_data["filename"],
                 file_path=image_data["file_path"],
                 original_filename=image_data["original_filename"],
