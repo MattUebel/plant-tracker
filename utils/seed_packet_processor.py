@@ -51,7 +51,7 @@ class SeedPacketProcessor:
 
     async def process_seed_packet(
         self, image_data: bytes, filename: str
-    ) -> Tuple[Dict[str, Any], str, str]:
+    ) -> Tuple[Dict[str, Any], str]:
         """
         Process a seed packet image to extract structured data.
 
@@ -60,7 +60,7 @@ class SeedPacketProcessor:
             filename: Original filename of the uploaded file
 
         Returns:
-            Tuple of (structured_data, file_path, ocr_text)
+            Tuple of (structured_data, file_path)
         """
         try:
             logger.info(f"Processing seed packet image: {filename}")
@@ -80,22 +80,13 @@ class SeedPacketProcessor:
 
             # Process the image with the Vision API
             try:
-                ocr_text, structured_data = (
-                    await image_processor.process_image_with_vision_api(file_path)
-                )
+                # Only extract structured data (no OCR text)
+                _, structured_data = await image_processor.process_image_with_vision_api(file_path)
                 logger.info(
-                    f"Vision API processing complete. OCR text length: {len(ocr_text)}"
+                    f"Structured data extracted: {json.dumps(structured_data)[:200]}..."
                 )
-
-                if structured_data:
-                    logger.info(
-                        f"Structured data extracted: {json.dumps(structured_data)[:200]}..."
-                    )
-                else:
-                    logger.warning("No structured data returned from Vision API")
             except Exception as e:
                 logger.error(f"Error during vision API processing: {str(e)}")
-                ocr_text = f"Error during OCR extraction: {str(e)}"
                 structured_data = None
 
             if not structured_data:
@@ -109,7 +100,7 @@ class SeedPacketProcessor:
             # Ensure all required fields exist with defaults if needed
             structured_data = self._process_structured_data(structured_data)
 
-            return structured_data, file_path, ocr_text
+            return structured_data, file_path
 
         except Exception as e:
             logger.error(f"Error processing seed packet: {str(e)}", exc_info=True)
@@ -125,11 +116,7 @@ class SeedPacketProcessor:
                 "spacing": None,
                 "notes": f"Error during processing: {str(e)}. Please enter details manually.",
             }
-            return (
-                structured_data,
-                file_path if "file_path" in locals() else "",
-                "Error during processing",
-            )
+            return structured_data, file_path if "file_path" in locals() else ""
 
     def _process_structured_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """

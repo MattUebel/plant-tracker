@@ -10,6 +10,18 @@
     <div class="alert alert-danger">{{ error }}</div>
     {% endif %}
     
+    {% if retry_image_data %}
+    <div class="alert alert-warning mt-4">Extraction failed. You can <strong>retry extraction</strong> without re-uploading your image.</div>
+    <form action="/seed-packets/retry-extraction" method="POST" class="mb-4">
+        <input type="hidden" name="image_data_hex" value="{{ retry_image_data }}">
+        <input type="hidden" name="original_filename" value="{{ original_filename }}">
+        <input type="hidden" name="mime_type" value="{{ mime_type }}">
+        <button type="submit" class="btn btn-warning">
+            <i class="bi bi-arrow-repeat"></i> Retry Extraction
+        </button>
+    </form>
+    {% endif %}
+    
     <div class="card">
         <div class="card-body">
             <h5 class="card-title">Upload a seed packet image for processing</h5>

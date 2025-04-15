@@ -78,7 +78,7 @@ async def process_seed_packet(
         image_data = await seed_packet.read()
 
         # Process the seed packet using our centralized processor
-        structured_data, file_path, ocr_text = (
+        structured_data, file_path = (
             await seed_packet_processor.process_seed_packet(
                 image_data, filename=seed_packet.filename
             )
@@ -86,7 +86,6 @@ async def process_seed_packet(
 
         # Debug the extracted data
         print(f"Extracted structured data: {structured_data}")
-        print(f"OCR text (first 100 chars): {ocr_text[:100]}...")
         print(f"File path: {file_path}")
 
         # Create a preview seed for display with proper property access
@@ -112,7 +111,6 @@ async def process_seed_packet(
                 "preview_seed": preview_seed,
                 "structured_data": structured_data,
                 "structured_data_json": json.dumps(structured_data),
-                "ocr_text": ocr_text,
                 "file_path": relative_file_path,  # Use just the filename for image display
                 "full_file_path": file_path,  # Keep the full path for form submission
                 "original_filename": seed_packet.filename,
@@ -132,6 +130,65 @@ async def process_seed_packet(
                 "request": request,
                 "title": "Upload Seed Packet",
                 "error": f"Error processing seed packet: {error_message}",
+                "retry_image_data": image_data.hex() if 'image_data' in locals() else None,
+                "original_filename": seed_packet.filename,
+                "mime_type": seed_packet.content_type,
+            },
+            status_code=500,
+        )
+
+
+@router.post("/retry-extraction", response_class=HTMLResponse)
+async def retry_extraction(
+    request: Request,
+    image_data_hex: str = Form(...),
+    original_filename: str = Form(...),
+    mime_type: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retry structured data extraction using the original uploaded image data (hex-encoded)."""
+    try:
+        image_data = bytes.fromhex(image_data_hex)
+        structured_data, file_path = (
+            await seed_packet_processor.process_seed_packet(
+                image_data, filename=original_filename
+            )
+        )
+        preview_seed = {
+            "name": structured_data.get("name", "Unknown Seed"),
+            "variety": structured_data.get("variety", ""),
+            "brand": structured_data.get("brand", ""),
+            "germination_rate": structured_data.get("germination_rate", ""),
+            "maturity": structured_data.get("maturity", ""),
+            "seed_depth": structured_data.get("seed_depth", ""),
+            "spacing": structured_data.get("spacing", ""),
+            "notes": structured_data.get("notes", ""),
+        }
+        relative_file_path = file_path.split("/")[-1] if file_path else ""
+        return templates.TemplateResponse(
+            "seed_packets/preview.html",
+            {
+                "request": request,
+                "preview_seed": preview_seed,
+                "structured_data": structured_data,
+                "structured_data_json": json.dumps(structured_data),
+                "file_path": relative_file_path,
+                "full_file_path": file_path,
+                "original_filename": original_filename,
+                "mime_type": mime_type,
+                "file_size": os.path.getsize(file_path) if file_path else 0,
+                "display_error": not file_path or not os.path.exists(file_path),
+            },
+        )
+    except Exception as e:
+        error_message = str(e)
+        print(f"Error retrying extraction: {error_message}")
+        return templates.TemplateResponse(
+            "seed_packets/upload.html",
+            {
+                "request": request,
+                "title": "Upload Seed Packet",
+                "error": f"Retry failed: {error_message}",
             },
             status_code=500,
         )
