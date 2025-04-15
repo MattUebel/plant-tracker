@@ -15,6 +15,7 @@ from utils.templates import templates
 from typing import Optional
 import os
 import json
+from PIL import Image as PILImage, UnidentifiedImageError
 
 router = APIRouter(
     prefix="/seed-packets",
@@ -45,6 +46,27 @@ async def process_seed_packet(
     This is a streamlined process that always shows the review form first before creating a seed.
     """
     try:
+        # Validate the uploaded file is a valid image
+        contents = await seed_packet.read()
+        if not contents or len(contents) == 0:
+            return templates.TemplateResponse(
+                "seed_packets/upload.html",
+                {"request": request, "error": "No image file uploaded or file is empty."},
+                status_code=400,
+            )
+        # Try to open with PIL to verify it's a valid image
+        try:
+            from io import BytesIO
+            PILImage.open(BytesIO(contents)).verify()
+        except (UnidentifiedImageError, Exception):
+            return templates.TemplateResponse(
+                "seed_packets/upload.html",
+                {"request": request, "error": "The uploaded file is not a valid image. Please try again."},
+                status_code=400,
+            )
+        # Reset file pointer for downstream processing
+        await seed_packet.seek(0)
+
         # Read the uploaded file
         image_data = await seed_packet.read()
 
