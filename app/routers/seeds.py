@@ -77,15 +77,27 @@ async def create_seed(
     variety: Optional[str] = Form(None),
     brand: Optional[str] = Form(None),
     source: Optional[str] = Form(None),
-    germination_days: Optional[int] = Form(None),
-    maturity_days: Optional[int] = Form(None),
-    planting_depth: Optional[float] = Form(None),
-    spacing: Optional[float] = Form(None),
+    germination_days: Optional[str] = Form(None),
+    maturity_days: Optional[str] = Form(None),
+    planting_depth: Optional[str] = Form(None),
+    spacing: Optional[str] = Form(None),
     growing_notes: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db),
 ):
     try:
+        # Convert empty strings to None and parse numbers
+        def parse_int(val):
+            return int(val) if val and val.strip() else None
+
+        def parse_float(val):
+            return float(val) if val and val.strip() else None
+
+        parsed_germination_days = parse_int(germination_days)
+        parsed_maturity_days = parse_int(maturity_days)
+        parsed_planting_depth = parse_float(planting_depth)
+        parsed_spacing = parse_float(spacing)
+
         # Check for required fields
         if not name:
             return templates.TemplateResponse(
@@ -102,8 +114,8 @@ async def create_seed(
             name=name,
             variety=variety,
             brand=brand,
-            seed_depth=planting_depth,
-            spacing=spacing,
+            seed_depth=parsed_planting_depth,
+            spacing=parsed_spacing,
             notes=growing_notes,
         )
 
