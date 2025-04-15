@@ -303,7 +303,7 @@
                 <div class="card-body">
                     <form action="/plantings/{{ planting.id }}/add-image" method="post" enctype="multipart/form-data">
                         <div class="input-group">
-                            <input type="file" class="form-control" id="image" name="image" accept="image/*" required
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*" capture="environment" required
                                    onchange="updateAddImageFileName(this)">
                             <button class="btn btn-primary" type="submit">Upload</button>
                         </div>
