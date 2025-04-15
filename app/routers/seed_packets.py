@@ -51,17 +51,24 @@ async def process_seed_packet(
         if not contents or len(contents) == 0:
             return templates.TemplateResponse(
                 "seed_packets/upload.html",
-                {"request": request, "error": "No image file uploaded or file is empty."},
+                {
+                    "request": request,
+                    "error": "No image file uploaded or file is empty.",
+                },
                 status_code=400,
             )
         # Try to open with PIL to verify it's a valid image
         try:
             from io import BytesIO
+
             PILImage.open(BytesIO(contents)).verify()
         except (UnidentifiedImageError, Exception):
             return templates.TemplateResponse(
                 "seed_packets/upload.html",
-                {"request": request, "error": "The uploaded file is not a valid image. Please try again."},
+                {
+                    "request": request,
+                    "error": "The uploaded file is not a valid image. Please try again.",
+                },
                 status_code=400,
             )
         # Reset file pointer for downstream processing

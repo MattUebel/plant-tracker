@@ -18,22 +18,10 @@
             <form action="/seed-packets/process" method="POST" enctype="multipart/form-data" class="mt-4" id="upload-form">
                 <div class="mb-3">
                     <label for="seed_packet" class="form-label">Seed Packet Image</label>
-                    <input type="file" class="form-control" id="seed_packet" name="seed_packet" accept="image/*" required style="display:none;">
-                    <div id="image-upload-buttons" class="mb-2">
-                        <button type="button" class="btn btn-primary w-100 mb-2" id="take-photo-btn">
-                            <i class="bi bi-camera"></i> Take Photo
-                        </button>
-                        <button type="button" class="btn btn-secondary w-100" id="choose-gallery-btn">
-                            <i class="bi bi-image"></i> Choose from Gallery
-                        </button>
-                    </div>
-                    <div id="image-upload-desktop" class="input-group d-none">
-                        <input type="file" class="form-control" id="image-desktop" name="seed_packet" accept="image/*" onchange="updateAddImageFileName(this)">
-                    </div>
-                    <small id="add-image-file-name" class="form-text text-muted">No file chosen</small>
+                    <input type="file" class="form-control" id="seed_packet" name="seed_packet" accept="image/*" required>
+                    <small class="form-text text-muted">Take a photo or choose from your gallery.</small>
                     <div class="form-text">Upload a clear, well-lit image of the seed packet. Make sure text is visible.</div>
                 </div>
-                
                 <button type="submit" class="btn btn-primary" id="process-button">
                     <i class="bi bi-magic"></i> Process Image
                 </button>
@@ -82,46 +70,6 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    function isMobile() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
-    const seedPacketInput = document.getElementById('seed_packet');
-    const addImageFileName = document.getElementById('add-image-file-name');
-    const takePhotoBtn = document.getElementById('take-photo-btn');
-    const chooseGalleryBtn = document.getElementById('choose-gallery-btn');
-    const imageUploadButtons = document.getElementById('image-upload-buttons');
-    const imageUploadDesktop = document.getElementById('image-upload-desktop');
-
-    if (isMobile()) {
-        imageUploadButtons.style.display = '';
-        imageUploadDesktop.classList.add('d-none');
-        // Take Photo button
-        takePhotoBtn.onclick = function() {
-            seedPacketInput.setAttribute('capture', 'environment');
-            seedPacketInput.click();
-        };
-        // Choose from Gallery button
-        chooseGalleryBtn.onclick = function() {
-            seedPacketInput.removeAttribute('capture');
-            seedPacketInput.click();
-        };
-    } else {
-        imageUploadButtons.style.display = 'none';
-        imageUploadDesktop.classList.remove('d-none');
-    }
-    // Show file name when selected
-    seedPacketInput.onchange = function() {
-        const fileName = seedPacketInput.files.length > 0 ? seedPacketInput.files[0].name : 'No file chosen';
-        addImageFileName.textContent = fileName;
-    };
-    // Also handle desktop input for file name
-    const imageDesktopInput = document.getElementById('image-desktop');
-    if (imageDesktopInput) {
-        imageDesktopInput.onchange = function() {
-            const fileName = imageDesktopInput.files.length > 0 ? imageDesktopInput.files[0].name : 'No file chosen';
-            addImageFileName.textContent = fileName;
-        };
-    }
     // Progress modal logic (unchanged)
     const form = document.getElementById('upload-form');
     const loadingOverlay = document.getElementById('loading-overlay');
@@ -129,13 +77,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressBar = document.getElementById('progress-bar');
     const progressMessage = document.getElementById('progress-message');
     form.addEventListener('submit', function(e) {
-        let fileInput = null;
-        if (isMobile()) {
-            fileInput = seedPacketInput;
-        } else {
-            fileInput = imageDesktopInput;
-        }
-        if (fileInput && fileInput.files.length > 0) {
+        const seedPacketInput = document.getElementById('seed_packet');
+        if (seedPacketInput && seedPacketInput.files.length > 0) {
             loadingOverlay.classList.remove('d-none');
             updateProgress(10, "Uploading image...");
             setTimeout(() => { updateProgress(30, "Analyzing image with Gemini AI..."); }, 1500);
