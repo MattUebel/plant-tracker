@@ -122,29 +122,6 @@
                               placeholder="Any additional notes about this planting...">{{ planting.notes }}</textarea>
                 </div>
                 
-                <!-- Add Transplant Event -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Add Transplant Event</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="transplant_event_date" class="form-label">Transplant Date</label>
-                                <input type="date" id="transplant_event_date" name="transplant_event_date"
-                                       class="form-control">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="transplant_event_description" class="form-label">Description</label>
-                                <input type="text" id="transplant_event_description" name="transplant_event_description"
-                                       class="form-control"
-                                       placeholder="E.g., Moved to larger pots">
-                            </div>
-                        </div>
-                        <div class="form-text">Leave blank if you're not adding a transplant event</div>
-                    </div>
-                </div>
-                
                 <!-- Submit Button -->
                 <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary">
@@ -159,17 +136,6 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const formattedDate = `${year}-${month}-${day}`;
-        
-        // Set default date for transplant event if not set
-        if (!document.getElementById('transplant_event_date').value) {
-            document.getElementById('transplant_event_date').value = formattedDate;
-        }
-    });
+    // Removed transplant event JS
 </script>
 {% endblock %}

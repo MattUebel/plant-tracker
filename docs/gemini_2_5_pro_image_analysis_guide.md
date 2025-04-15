@@ -200,7 +200,6 @@ async def extract_seed_packet_data(image_path):
     - brand: The company/manufacturer of the seed packet
     - germination_rate: The germination rate as a decimal (convert from percentage if needed)
     - maturity: Days to maturity/harvest as an integer number only
-    - growth: Growth habit (e.g., "Determinate", "Bush", "Vining", "Upright")
     - seed_depth: Recommended planting depth in inches (convert from other units if needed)
     - spacing: Recommended spacing between plants in inches (convert from other units if needed)
     - quantity: Number of seeds in the packet if mentioned

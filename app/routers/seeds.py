@@ -57,11 +57,10 @@ async def get_seed_data(seed_id: int, db: AsyncSession = Depends(get_db)):
         "id": seed.id,
         "name": seed.name,
         "variety": seed.variety,
-        "germination": seed.germination_rate,  # Fixed: was germination_days
-        "maturity": seed.maturity,  # Fixed: was maturity_days
-        "seed_depth": seed.seed_depth,  # Fixed: was planting_depth
+        "germination": seed.germination_rate,
+        "maturity": seed.maturity,
+        "seed_depth": seed.seed_depth,
         "spacing": seed.spacing,
-        "growth": seed.growth,  # Fixed: was growing_notes
     }
 
 
@@ -104,7 +103,6 @@ async def create_seed(
             maturity=maturity_days,  # Using correct field name from the model
             seed_depth=planting_depth,  # Using correct field name from the model
             spacing=spacing,
-            growth=growing_notes,  # Using correct field name from the model
         )
 
         # Use async-compatible SQLAlchemy operations
@@ -238,7 +236,6 @@ async def update_seed(
         # Handle germination_days separately if needed
         seed.seed_depth = planting_depth  # Use correct field name seed_depth
         seed.spacing = spacing
-        seed.growth = growing_notes  # Use correct field name growth
 
         # Save uploaded image if provided
         if image and image.filename:
@@ -298,6 +295,43 @@ async def delete_seed_image(
         raise HTTPException(status_code=500, detail=f"Error deleting image: {str(e)}")
 
 
+@router.post("/{seed_id}/add-image", response_class=HTMLResponse)
+async def add_seed_image(
+    seed_id: int,
+    request: Request,
+    image: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """Add an image to a seed from the detail page"""
+    try:
+        # Get the seed
+        result = await db.execute(select(Seed).where(Seed.id == seed_id))
+        seed = result.scalars().first()
+        if not seed:
+            raise HTTPException(status_code=404, detail="Seed not found")
+        # Save the uploaded image
+        image_data = await image_processor.save_image(image, "seed", seed_id)
+        new_image = Image(
+            entity_type="seed",
+            entity_id=seed_id,
+            seed_id=seed_id,
+            filename=image_data["filename"],
+            file_path=image_data["file_path"],
+            original_filename=image_data["original_filename"],
+            mime_type=image_data["mime_type"],
+            file_size=image_data["file_size"],
+        )
+        db.add(new_image)
+        await db.commit()
+        # Redirect to seed details
+        return templates.TemplateResponse(
+            "redirect.html", {"request": request, "url": f"/seeds/{seed_id}"}
+        )
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error adding image: {str(e)}")
+
+
 async def update_seed_from_structured_data(
     seed: Seed, structured_data: dict, overwrite_existing: bool = False
 ) -> Seed:
@@ -345,13 +379,6 @@ async def update_seed_from_structured_data(
             seed.maturity = int(structured_data["maturity"])
         except (ValueError, TypeError):
             pass
-
-    if (
-        "growth" in structured_data
-        and structured_data["growth"]
-        and should_update("growth")
-    ):
-        seed.growth = structured_data["growth"]
 
     if (
         "seed_depth" in structured_data

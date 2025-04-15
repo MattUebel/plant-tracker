@@ -3,6 +3,11 @@
 {% block title %}{{ seed.name }} - Seed Details{% endblock %}
 
 {% block content %}
+<div class="container">
+    <!-- Seed Name Header -->
+    <h1 class="mb-4">{{ seed.name }} {% if seed.variety %}({{ seed.variety }}){% endif %}</h1>
+</div>
+
 <!-- Navigation bar with prominent action button -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light rounded mb-4 shadow-sm">
     <div class="container-fluid">
@@ -28,82 +33,45 @@
 </nav>
 
 <div class="container">
-    <!-- Seed Name Header -->
-    <h1 class="mb-4">{{ seed.name }} {% if seed.variety %}({{ seed.variety }}){% endif %}</h1>
-
     <!-- Two-Column Layout -->
     <div class="row">
         <!-- Left Column: Images and OCR Data -->
         <div class="col-md-6 mb-4">
             {% if seed.images %}
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Seed Images</h5>
-                    {% if seed.images|length > 3 %}
-                    <a href="/seeds/{{ seed.id }}/images" class="btn btn-sm btn-primary">View All</a>
-                    {% endif %}
+            <div id="seedCarousel" class="carousel slide">
+                <div class="carousel-indicators">
+                    {% for image in seed.images %}
+                    <button type="button" data-bs-target="#seedCarousel" data-bs-slide-to="{{ loop.index0 }}"
+                            class="{% if loop.first %}active{% endif %}"
+                            aria-current="{% if loop.first %}true{% else %}false{% endif %}"
+                            aria-label="Slide {{ loop.index }}"></button>
+                    {% endfor %}
                 </div>
-                <div class="card-body">
-                    <!-- Main image (larger) -->
-                    <div class="text-center mb-3">
-                        <a href="/uploads/{{ seed.images[0].filename }}" target="_blank">
-                            <img src="/uploads/{{ seed.images[0].filename }}" class="img-fluid rounded shadow-sm" 
-                                 style="max-height: 300px;" alt="{{ seed.images[0].original_filename or 'Main seed image' }}">
-                        </a>
-                    </div>
-
-                    <!-- Thumbnail row for additional images -->
-                    {% if seed.images|length > 1 %}
-                    <div class="row g-2">
-                        {% for image in seed.images[1:3] %}
-                        <div class="col-6">
-                            <a href="/uploads/{{ image.filename }}" target="_blank" class="d-block">
-                                <img src="/uploads/{{ image.filename }}" class="img-thumbnail" alt="Additional seed image">
-                            </a>
+                <div class="carousel-inner">
+                    {% for image in seed.images %}
+                    <div class="carousel-item {% if loop.first %}active{% endif %}">
+                        <div style="height: 300px; background-color: #f8f9fa; text-align: center;">
+                            <img src="/uploads/{{ image.filename }}" class="d-block mx-auto" style="max-height: 100%; max-width: 100%; object-fit: contain;" alt="Seed image">
                         </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    <!-- OCR/Structured Data Accordion -->
-                    {% set first_image = seed.images[0] %}
-                    {% if first_image.ocr_text or first_image.structured_data %}
-                    <div class="accordion mt-3" id="imageData">
-                        {% if first_image.structured_data %}
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#structuredData">
-                                    Extracted Data
-                                </button>
-                            </h2>
-                            <div id="structuredData" class="accordion-collapse collapse" data-bs-parent="#imageData">
-                                <div class="accordion-body">
-                                    <pre class="small text-wrap">{{ first_image.structured_data | tojson(indent=2) }}</pre>
-                                </div>
-                            </div>
+                        <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded">
+                            <small>Image {{ loop.index }} of {{ seed.images|length }}</small>
                         </div>
-                        {% endif %}
-                        
-                        {% if first_image.ocr_text %}
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#ocrText">
-                                    OCR Text
-                                </button>
-                            </h2>
-                            <div id="ocrText" class="accordion-collapse collapse" data-bs-parent="#imageData">
-                                <div class="accordion-body">
-                                    <pre class="small text-wrap">{{ first_image.ocr_text }}</pre>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
                     </div>
-                    {% endif %}
+                    {% endfor %}
                 </div>
-                <div class="card-footer bg-white">
-                    <small class="text-muted">{{ seed.images|length }} image{% if seed.images|length != 1 %}s{% endif %} available</small>
-                </div>
+                {% if seed.images|length > 1 %}
+                <button class="carousel-control-prev" type="button" data-bs-target="#seedCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#seedCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+                {% endif %}
+            </div>
+            <div class="text-center mt-2">
+                <p class="text-muted"><small>{{ seed.images|length }} image{% if seed.images|length != 1 %}s{% endif %} attached to this seed</small></p>
             </div>
             {% else %}
             <div class="card shadow-sm mb-4 h-100">
@@ -121,12 +89,28 @@
                 </div>
             </div>
             {% endif %}
+
+            <!-- Add New Image Form -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Add New Image</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/seeds/{{ seed.id }}/add-image" method="post" enctype="multipart/form-data">
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*" required onchange="updateAddImageFileName(this)">
+                            <button class="btn btn-primary" type="submit">Upload</button>
+                        </div>
+                        <small id="add-image-file-name" class="form-text text-muted">No file chosen</small>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <!-- Right Column: Seed Details -->
         <div class="col-md-6 mb-4">
             <div class="card shadow-sm h-100">
-                <div class="card-header bg-light">
+                <div class="card-header">
                     <h5 class="card-title mb-0">Seed Details</h5>
                 </div>
                 <div class="card-body">
@@ -137,32 +121,11 @@
                         <dt class="col-sm-4">Brand:</dt>
                         <dd class="col-sm-8">{{ seed.brand }}</dd>
                         {% endif %}
-                        
-                        <dt class="col-sm-4">Germination Rate:</dt>
-                        <dd class="col-sm-8">
-                            {% if seed.germination_rate != None %}
-                                {{ "%.1f"|format(seed.germination_rate * 100) }}%
-                            {% else %}
-                                <span class="text-muted">Not specified</span>
-                            {% endif %}
-                        </dd>
-                        
-                        <dt class="col-sm-4">Days to Maturity:</dt>
-                        <dd class="col-sm-8">
-                            {% if seed.maturity != None %}
-                                {{ seed.maturity }} days
-                            {% else %}
-                                <span class="text-muted">Not specified</span>
-                            {% endif %}
-                        </dd>
                     </dl>
 
                     <!-- Growing Information -->
                     <h6 class="fw-bold border-bottom pb-2 mb-3 mt-4">Growing Information</h6>
                     <dl class="row">
-                        <dt class="col-sm-4">Growth Habit:</dt>
-                        <dd class="col-sm-8">{{ seed.growth or "<span class='text-muted'>Not specified</span>" }}</dd>
-                        
                         <dt class="col-sm-4">Planting Depth:</dt>
                         <dd class="col-sm-8">
                             {% if seed.seed_depth != None %}
@@ -252,12 +215,26 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Format newlines in notes
-    const notes = document.getElementById('seed-notes');
-    if (notes) {
-        notes.innerHTML = notes.innerHTML.replace(/\n/g, '<br>');
-    }
-});
+    // Initialize the carousel for seeds (no auto-rotation)
+    document.addEventListener('DOMContentLoaded', function() {
+        const carousel = document.getElementById('seedCarousel');
+        if (carousel) {
+            new bootstrap.Carousel(carousel, {
+                interval: false,
+                wrap: true,
+                touch: true
+            });
+        }
+        // Format newlines in notes
+        const notes = document.getElementById('seed-notes');
+        if (notes) {
+            notes.innerHTML = notes.innerHTML.replace(/\n/g, '<br>');
+        }
+        // Add image file name update for add image form
+        window.updateAddImageFileName = function(input) {
+            const fileName = input.files.length > 0 ? input.files[0].name : 'No file chosen';
+            document.getElementById('add-image-file-name').textContent = fileName;
+        }
+    });
 </script>
 {% endblock %}

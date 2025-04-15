@@ -21,10 +21,6 @@ class Seed(Base):
     brand = Column(String(100))
 
     # Key fields as specified
-    germination_rate = Column(Float)  # Percentage as a decimal (0.0-1.0)
-    germ_date = Column(Date)  # Date when seeds should germinate
-    maturity = Column(Integer)  # Days to maturity
-    growth = Column(Text)  # Growth habit or pattern - Changed from String(100) to Text
     _seed_depth = Column("seed_depth", Float)  # Planting depth in inches
     spacing = Column(Float)  # Spacing between plants in inches
 

@@ -234,11 +234,9 @@ async def update_planting(
     successful_plants: str = Form(default=""),
     planting_date: Optional[str] = Form(default=None),
     notes: Optional[str] = Form(default=""),
-    transplant_event_date: Optional[str] = Form(default=None),
-    transplant_event_description: Optional[str] = Form(default=None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Update planting"""
+    """Update planting (transplant event fields removed)"""
     # Get the planting to update
     result = await db.execute(select(Planting).where(Planting.id == planting_id))
     planting = result.scalars().first()
@@ -286,24 +284,6 @@ async def update_planting(
     planting.seeds_planted = parsed_seeds_planted
     planting.successful_plants = parsed_successful_plants
     planting.notes = notes
-
-    # Handle transplant event if provided
-    if transplant_event_date and transplant_event_description:
-        try:
-            event_date = date.fromisoformat(transplant_event_date)
-
-            # Add new transplant event
-            new_event = TransplantEvent(
-                planting_id=planting_id,
-                date=event_date,
-                description=transplant_event_description,
-            )
-
-            db.add(new_event)
-        except ValueError:
-            raise HTTPException(
-                status_code=400, detail="Invalid date format for transplant event."
-            )
 
     # Save changes
     await db.commit()

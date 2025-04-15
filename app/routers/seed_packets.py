@@ -67,7 +67,6 @@ async def process_seed_packet(
             "brand": structured_data.get("brand", ""),
             "germination_rate": structured_data.get("germination_rate", ""),
             "maturity": structured_data.get("maturity", ""),
-            "growth": structured_data.get("growth", ""),
             "seed_depth": structured_data.get("seed_depth", ""),
             "spacing": structured_data.get("spacing", ""),
             "notes": structured_data.get("notes", ""),
@@ -124,7 +123,6 @@ async def create_seed_from_preview(
         None
     ),  # Changed to str to handle empty values
     maturity: Optional[str] = Form(None),  # Changed to str to handle empty values
-    growth: Optional[str] = Form(None),
     seed_depth: Optional[str] = Form(None),  # Changed to str to handle empty values
     spacing: Optional[str] = Form(None),  # Changed to str to handle empty values
     notes: Optional[str] = Form(None),
@@ -175,7 +173,6 @@ async def create_seed_from_preview(
             brand=brand,
             germination_rate=parsed_germination_rate,
             maturity=parsed_maturity,
-            growth=growth,
             seed_depth=parsed_seed_depth,
             spacing=parsed_spacing,
             notes=notes,

@@ -17,33 +17,33 @@
 
 {% if seeds %}
 <!-- Desktop/tablet view: Table -->
-<div class="d-none d-md-block table-responsive">
-    <table class="table table-striped table-hover">
-        <thead class="table-light">
-            <tr>
-                <th>Name</th>
-                <th>Variety</th>
-                <th>Brand</th>
-                <th>Plantings</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for seed in seeds %}
-            <tr style="cursor: pointer" onclick="window.location='/seeds/{{ seed.id }}'">
-                <td>{{ seed.name }}</td>
-                <td>{{ seed.variety or "" }}</td>
-                <td>{{ seed.brand or "" }}</td>
-                <td>
-                    {% if seed.plantings and seed.plantings|length > 0 %}
-                        <span class="badge bg-success rounded-pill">{{ seed.plantings|length }}</span>
-                    {% else %}
-                        <span class="badge bg-secondary rounded-pill">0</span>
-                    {% endif %}
-                </td>
-                <td onclick="event.stopPropagation()">
-                    <div class="btn-group btn-group-sm">
-                        <a href="/seeds/{{ seed.id }}" class="btn btn-info" data-bs-toggle="tooltip" title="View Details">
+<div class="d-none d-md-block">
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Variety</th>
+                    <th>Brand</th>
+                    <th>Plantings</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for seed in seeds %}
+                <tr style="cursor: pointer" onclick="window.location='/seeds/{{ seed.id }}'">
+                    <td>{{ seed.name }}</td>
+                    <td>{{ seed.variety or "" }}</td>
+                    <td>{{ seed.brand or "" }}</td>
+                    <td>
+                        {% if seed.plantings and seed.plantings|length > 0 %}
+                            <span class="badge bg-success rounded-pill">{{ seed.plantings|length }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary rounded-pill">0</span>
+                        {% endif %}
+                    </td>
+                    <td onclick="event.stopPropagation()">
+                        <div class="btn-group btn-group-sm">
                             <i class="bi bi-eye"></i>
                         </a>
                         <a href="/seeds/{{ seed.id }}/edit" class="btn btn-warning" data-bs-toggle="tooltip" title="Edit">
@@ -79,7 +79,8 @@
             </tr>
             {% endfor %}
         </tbody>
-    </table>
+        </table>
+    </div>
 </div>
 
 <!-- Mobile view: Cards -->

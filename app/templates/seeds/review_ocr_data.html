@@ -72,13 +72,6 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td>Growth Habit</td>
-                                <td>{{ seed.growth or '-' }}</td>
-                                <td class="{% if seed.growth != preview_seed.growth %}table-warning{% endif %}">
-                                    {{ preview_seed.growth or '-' }}
-                                </td>
-                            </tr>
-                            <tr>
                                 <td>Seed Depth (in)</td>
                                 <td>{{ seed.seed_depth or '-' }}</td>
                                 <td class="{% if seed.seed_depth != preview_seed.seed_depth %}table-warning{% endif %}">
