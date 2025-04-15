@@ -18,7 +18,20 @@
             <form action="/seed-packets/process" method="POST" enctype="multipart/form-data" class="mt-4" id="upload-form">
                 <div class="mb-3">
                     <label for="seed_packet" class="form-label">Seed Packet Image</label>
-                    <input type="file" class="form-control" id="seed_packet" name="seed_packet" accept="image/*" required>
+                    <div id="image-upload-desktop" class="input-group d-none">
+                        <input type="file" class="form-control" id="image-desktop" name="seed_packet" accept="image/*" required onchange="updateAddImageFileName(this)">
+                    </div>
+                    <div id="image-upload-mobile" class="d-none mb-2">
+                        <label class="btn btn-primary w-100 mb-2">
+                            <i class="bi bi-camera"></i> Take Photo
+                            <input type="file" class="d-none" id="image-camera" name="seed_packet" accept="image/*" capture="environment" onchange="updateAddImageFileName(this)">
+                        </label>
+                        <label class="btn btn-secondary w-100">
+                            <i class="bi bi-image"></i> Choose from Gallery
+                            <input type="file" class="d-none" id="image-gallery" name="seed_packet" accept="image/*" onchange="updateAddImageFileName(this)">
+                        </label>
+                    </div>
+                    <small id="add-image-file-name" class="form-text text-muted">No file chosen</small>
                     <div class="form-text">Upload a clear, well-lit image of the seed packet. Make sure text is visible.</div>
                 </div>
                 
@@ -70,6 +83,20 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Device detection and UI switching for image upload
+    function isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    if (isMobile()) {
+        document.getElementById('image-upload-mobile').classList.remove('d-none');
+    } else {
+        document.getElementById('image-upload-desktop').classList.remove('d-none');
+    }
+    window.updateAddImageFileName = function(input) {
+        const fileName = input.files.length > 0 ? input.files[0].name : 'No file chosen';
+        document.getElementById('add-image-file-name').textContent = fileName;
+    }
+
     const form = document.getElementById('upload-form');
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingMessage = document.getElementById('loading-message');
@@ -77,9 +104,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressMessage = document.getElementById('progress-message');
     
     form.addEventListener('submit', function(e) {
-        const fileInput = document.getElementById('seed_packet');
+        const fileInput = document.getElementById('image-desktop') || document.getElementById('image-camera') || document.getElementById('image-gallery');
         
-        if (fileInput.files.length > 0) {
+        if (fileInput && fileInput.files.length > 0) {
             // Show loading overlay
             loadingOverlay.classList.remove('d-none');
             
