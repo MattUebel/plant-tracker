@@ -120,20 +120,15 @@ async def upload_seed_image(
             seed_id=seed_id,  # Set the seed_id for the relationship
         )
 
-        ocr_text = None
-        structured_data = None
-
         # Process image with configured Vision API if requested
         if process_ocr:
             # Override provider based on user selection
             if provider:
                 image_processor.vision_api_provider = provider.lower()
-            ocr_text, structured_data = (
-                await image_processor.process_image_with_vision_api(
-                    image_data["file_path"]
-                )
+            # Only keep structured_data; ignore raw OCR
+            _, structured_data = await image_processor.process_image_with_vision_api(
+                image_data["file_path"]
             )
-            new_image.ocr_text = ocr_text
             new_image.structured_data = structured_data
 
         # Save to database
@@ -175,7 +170,6 @@ async def upload_seed_image(
                     "preview_seed": preview_seed,
                     "image": new_image,
                     "structured_data": structured_data,
-                    "ocr_text": ocr_text,
                     "vision_api_provider": vision_api_provider,
                 },
             )
@@ -258,10 +252,10 @@ async def process_image_ocr(
     selected = form.get("provider")
     if selected:
         image_processor.vision_api_provider = selected.lower()
-    ocr_text, structured_data = await image_processor.process_image_with_vision_api(
+    # Only keep structured_data, no raw OCR
+    _, structured_data = await image_processor.process_image_with_vision_api(
         image.file_path
     )
-    image.ocr_text = ocr_text
     image.structured_data = structured_data
 
     # Create a preview seed without modifying the original
@@ -299,7 +293,6 @@ async def process_image_ocr(
             "preview_seed": preview_seed,
             "image": image,
             "structured_data": structured_data,
-            "ocr_text": ocr_text,
             "vision_api_provider": vision_api_provider,
         },
     )
@@ -368,7 +361,7 @@ async def apply_ocr_data_form(
     )
     image = result.scalars().first()
 
-    if not image or not image.ocr_text:
+    if not image or not image.structured_data:
         raise HTTPException(status_code=404, detail="Image or OCR data not found")
 
     # Get structured data directly from the image

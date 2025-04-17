@@ -200,7 +200,6 @@ async def create_seed_from_preview(
     file_path: str = Form(...),
     original_filename: str = Form(...),
     mime_type: str = Form(...),
-    ocr_text: str = Form(...),
     structured_data_json: str = Form(...),
     name: str = Form(...),
     variety: Optional[str] = Form(None),
@@ -252,7 +251,6 @@ async def create_seed_from_preview(
                 original_filename=original_filename,
                 mime_type=mime_type,
                 file_size=file_size,
-                ocr_text=ocr_text,
                 structured_data=structured_data_json,
             )
 

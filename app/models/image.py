@@ -17,7 +17,6 @@ class Image(Base):
     original_filename = Column(String(255), nullable=True)
     mime_type = Column(String(100), nullable=True)
     file_size = Column(Integer, nullable=True)  # Size in bytes
-    ocr_text = Column(Text, nullable=True)  # Raw OCR text from the image
     structured_data = Column(JSON, nullable=True)  # Structured data extracted from OCR
     seed_id = Column(Integer, ForeignKey("seeds.id", ondelete="CASCADE"), nullable=True)
     planting_id = Column(

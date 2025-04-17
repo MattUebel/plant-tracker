@@ -31,3 +31,28 @@
   - Standard Docker deployment using docker compose
   - Raspberry Pi deployment as a systemd service using the provided installation script
   - The Raspberry Pi installation requires an API key for OCR functionality
+
+## Database Migrations
+
+Use the `scripts/migrate.sh` helper to manage Alembic migrations within Docker:
+
+- Generate a new migration:
+  ```bash
+  ./scripts/migrate.sh migrate "describe change"
+  ```
+- Apply all pending migrations:
+  ```bash
+  ./scripts/migrate.sh upgrade head
+  ```
+- Revert the last migration:
+  ```bash
+  ./scripts/migrate.sh downgrade
+  ```
+- Show current revision:
+  ```bash
+  ./scripts/migrate.sh current
+  ```
+- View migration history:
+  ```bash
+  ./scripts/migrate.sh history
+  ```
