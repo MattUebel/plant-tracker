@@ -17,10 +17,11 @@ services:
       - DEBUG=${DEBUG:-false}
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-3-7-sonnet-20250219}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-pro-exp-03-25}
-      - VISION_API_PROVIDER=gemini  # Explicitly set to use Gemini
+      - VISION_API_PROVIDER=${VISION_API_PROVIDER:-gemini}  # Use .env setting with fallback to gemini
       # Add other environment variables as needed
     depends_on:
       - db

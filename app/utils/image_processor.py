@@ -310,18 +310,20 @@ class ImageProcessor:
                 image_bytes = self.resize_image_for_claude(
                     image_path, max_size_bytes=current_max_size
                 )
-                encoded_image = base64.b64encode(image_bytes).decode()
-                image_size_mb = len(image_bytes) / (1024 * 1024)
-
-                if image_size_mb > 5.0:
+                # Ensure base64-encoded payload stays under Claude's 5MB limit
+                encoded_bytes = base64.b64encode(image_bytes)
+                if len(encoded_bytes) > self.claude_max_size:
                     logger.warning(
-                        f"Image still too large after resize: {image_size_mb:.2f}MB. Retrying with more aggressive reduction."
+                        f"Encoded image too large for Claude (base64): {len(encoded_bytes)/(1024*1024):.2f}MB. Retrying with more aggressive reduction."
                     )
                     current_max_size *= 0.8  # Reduce target size by 20%
                     retries += 1
                     continue
+                encoded_image = encoded_bytes.decode()
 
-                logger.info(f"Image processed. Final size: {image_size_mb:.2f} MB")
+                logger.info(
+                    f"Image processed. Final size: {len(encoded_bytes)/(1024*1024):.2f} MB"
+                )
 
                 # Call the API with the processed image
                 logger.info(

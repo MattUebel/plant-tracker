@@ -59,7 +59,7 @@ class ImageProcessor:
         self.mistral_chat_api_endpoint = "https://api.mistral.ai/v1/chat/completions"
         self.mistral_ocr_api_endpoint = "https://api.mistral.ai/v1/ocr"
 
-        # Vision API configuration
+        # Vision API keys and models
         self.vision_api_provider = os.getenv("VISION_API_PROVIDER", "claude").lower()
         self.claude_api_key = os.getenv("ANTHROPIC_API_KEY")
         self.gemini_api_key = os.getenv("GEMINI_API_KEY")
@@ -69,42 +69,34 @@ class ImageProcessor:
         # Create upload directory if it doesn't exist
         os.makedirs(self.upload_dir, exist_ok=True)
 
-        # Log configuration status
+        # Log Mistral key status
         if not self.mistral_api_key:
-            logger.warning(
-                "MISTRAL_API_KEY not found in environment variables. OCR functionality will not work."
-            )
+            logger.warning("MISTRAL_API_KEY not found. Mistral OCR will not work.")
         else:
             logger.info("MISTRAL_API_KEY configured successfully")
 
-        # Initialize Vision API clients if keys are available
-        if self.vision_api_provider == "claude":
-            if not self.claude_api_key:
-                logger.warning(
-                    "ANTHROPIC_API_KEY not found. Claude Vision API will not work."
-                )
-            elif not CLAUDE_AVAILABLE:
-                logger.warning(
-                    "anthropic package not installed. Claude Vision API will not work."
-                )
-            else:
+        # Initialize Claude Vision client if key/package available
+        if self.claude_api_key:
+            if CLAUDE_AVAILABLE:
                 try:
                     self.claude_client = Anthropic(api_key=self.claude_api_key)
                     logger.info(
                         f"Claude Vision API configured with model: {self.claude_model}"
                     )
                 except Exception as e:
-                    logger.error(f"Error initializing Claude client: {str(e)}")
-        elif self.vision_api_provider == "gemini":
-            if not self.gemini_api_key:
-                logger.warning(
-                    "GEMINI_API_KEY not found. Gemini Vision API will not work."
-                )
-            elif not GEMINI_AVAILABLE:
-                logger.warning(
-                    "google-genai package not installed. Gemini Vision API will not work."
-                )
+                    logger.error(f"Error initializing Claude client: {e}")
             else:
+                logger.warning(
+                    "Anthropic package missing; Claude Vision API unavailable."
+                )
+        else:
+            logger.warning(
+                "ANTHROPIC_API_KEY not found; Claude Vision API unavailable."
+            )
+
+        # Initialize Gemini Vision client if key/package available
+        if self.gemini_api_key:
+            if GEMINI_AVAILABLE:
                 try:
                     genai.configure(api_key=self.gemini_api_key)
                     self.gemini_model_instance = genai.GenerativeModel(
@@ -114,11 +106,13 @@ class ImageProcessor:
                         f"Gemini Vision API configured with model: {self.gemini_model}"
                     )
                 except Exception as e:
-                    logger.error(f"Error initializing Gemini client: {str(e)}")
+                    logger.error(f"Error initializing Gemini client: {e}")
+            else:
+                logger.warning(
+                    "google-generativeai package missing; Gemini Vision API unavailable."
+                )
         else:
-            logger.warning(
-                f"Unknown vision API provider: {self.vision_api_provider}. Using Mistral for fallback."
-            )
+            logger.warning("GEMINI_API_KEY not found; Gemini Vision API unavailable.")
 
     async def save_image(
         self, file: UploadFile, entity_type: str, entity_id: int
@@ -308,8 +302,19 @@ class ImageProcessor:
             }
 
             payload = {
-                "model": "mistral-small-latest",  # Can use small model for structured extraction
-                "messages": [{"role": "user", "content": prompt}],
+                "model": "mistral-small-latest",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": f"data:image/jpeg;base64,{encoded}",
+                            },
+                        ],
+                    }
+                ],
                 "max_tokens": 1000,
                 "temperature": 0.1,
                 "response_format": {"type": "json_object"},
@@ -363,23 +368,30 @@ class ImageProcessor:
             return None
 
     async def process_image_with_vision_api(
-        self, image_path: str
+        self, image_path: str, provider: Optional[str] = None
     ) -> Tuple[str, Optional[Dict[str, Any]]]:
-        """Process image with the configured vision API provider (Claude or Gemini)"""
+        """Process image with the specified or configured vision API provider (Claude, Gemini, or Mistral)"""
+
+        # Determine which provider to use for this call
+        chosen_provider = provider.lower() if provider else self.vision_api_provider
         logger.info(
-            f"Processing image with {self.vision_api_provider.capitalize()} Vision API: {image_path}"
+            f"Processing image with {chosen_provider.capitalize()} Vision API: {image_path}"
         )
 
-        if self.vision_api_provider == "claude":
+        if chosen_provider == "claude":
+            if not hasattr(self, "claude_client"):
+                err = "Claude Vision API not configured; missing ANTHROPIC_API_KEY or anthropic package"
+                logger.error(err)
+                return err, None
             return await self._process_with_claude(image_path)
-        elif self.vision_api_provider == "gemini":
+        elif chosen_provider == "gemini":
             return await self._process_with_gemini(image_path)
+        elif chosen_provider == "mistral":
+            return await self._process_with_mistral(image_path)
         else:
-            # Fallback to Mistral OCR
-            logger.warning(
-                f"No valid vision API provider configured. Falling back to Mistral OCR."
-            )
-            return await self.process_ocr(image_path)
+            # Fallback: just return error for unknown provider
+            logger.error(f"Unknown provider: {chosen_provider}")
+            return f"Unknown provider: {chosen_provider}", None
 
     async def _process_with_claude(
         self, image_path: str
@@ -702,6 +714,85 @@ class ImageProcessor:
                 )
         except Exception as e:
             logger.error(f"[Gemini] Error processing image: {str(e)}", exc_info=True)
+            return None, None
+
+    async def _process_with_mistral(
+        self, image_path: str
+    ) -> Tuple[str, Optional[Dict[str, Any]]]:
+        """Process image using Mistral Chat API for structured data in one step"""
+        if not self.mistral_api_key:
+            err = "Mistral API key not set"
+            logger.error(err)
+            return err, None
+        try:
+            # Read and encode image
+            with open(image_path, "rb") as img_file:
+                img_bytes = img_file.read()
+            encoded = base64.b64encode(img_bytes).decode("utf-8")
+
+            # Single structured-data prompt
+            prompt = (
+                "Extract structured plant information from this seed packet image. "
+                "Return ONLY a valid JSON object with fields: name, variety, brand, "
+                "germination_rate, maturity, growth, seed_depth, spacing, notes. "
+                "Use null for missing fields and include no extra text."
+            )
+
+            payload = {
+                "model": "mistral-small-latest",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": f"data:image/jpeg;base64,{encoded}",
+                            },
+                        ],
+                    }
+                ],
+                "max_tokens": 1000,
+                "temperature": 0.1,
+                "response_format": {"type": "json_object"},
+            }
+            headers = {
+                "Authorization": f"Bearer {self.mistral_api_key}",
+                "Content-Type": "application/json",
+            }
+            logger.info(
+                f"Sending payload to Mistral Chat API: {json.dumps(payload)[:500]}..."
+            )
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    self.mistral_chat_api_endpoint, headers=headers, json=payload
+                )
+            logger.info(f"Mistral Chat API response status: {resp.status_code}")
+            if resp.status_code != 200:
+                logger.error(
+                    f"Mistral Chat API error: {resp.status_code} - {resp.text}"
+                )
+                return None, None
+            try:
+                result = resp.json()
+            except Exception as e:
+                logger.error(f"Failed to parse Mistral response as JSON: {resp.text}")
+                return None, None
+            content_msg = (
+                result.get("choices", [{}])[0].get("message", {}).get("content", "")
+            )
+            # Parse JSON
+            try:
+                data = json.loads(content_msg)
+                return None, data
+            except json.JSONDecodeError:
+                logger.error(
+                    f"Failed to decode JSON from Mistral response: {content_msg}"
+                )
+                return None, None
+        except Exception as e:
+            logger.error(f"Error calling Mistral API: {e}")
+            logger.error(f"Payload sent: {json.dumps(payload)[:500]}...")
             return None, None
 
     def _extract_json_from_text(self, text: str) -> Optional[str]:

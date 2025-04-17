@@ -38,6 +38,7 @@ async def upload_seed_packet_form(request: Request):
 @router.post("/process", response_class=HTMLResponse)
 async def process_seed_packet(
     request: Request,
+    provider: str = Form("gemini"),
     seed_packet: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
 ):
@@ -79,7 +80,7 @@ async def process_seed_packet(
 
         # Process the seed packet using our centralized processor
         structured_data, file_path = await seed_packet_processor.process_seed_packet(
-            image_data, filename=seed_packet.filename
+            image_data, filename=seed_packet.filename, provider=provider
         )
 
         # Debug the extracted data
@@ -106,6 +107,7 @@ async def process_seed_packet(
             "seed_packets/preview.html",
             {
                 "request": request,
+                "provider": provider,
                 "preview_seed": preview_seed,
                 "structured_data": structured_data,
                 "structured_data_json": json.dumps(structured_data),

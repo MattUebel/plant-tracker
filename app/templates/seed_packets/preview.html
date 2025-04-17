@@ -18,7 +18,7 @@
     <div class="row">
         <div class="col-md-6">
             <div class="card mb-4">
-                <div class="card-header bg-light">
+                <div class="card-header">
                     <h5 class="card-title mb-0">Extracted Data</h5>
                 </div>
                 <div class="card-body">
@@ -73,7 +73,7 @@
         
         <div class="col-md-6">
             <div class="card mb-4">
-                <div class="card-header bg-light">
+                <div class="card-header">
                     <h5 class="card-title mb-0">Seed Packet Image</h5>
                 </div>
                 <div class="card-body">
@@ -90,7 +90,15 @@
                     <!-- Vision API Provider Badge -->
                     <div class="alert alert-success mb-3">
                         <i class="bi bi-check-circle-fill me-2"></i>
-                        <strong>Data extracted with Gemini Vision AI</strong>
+                        <strong>
+                            {% if provider == 'claude' %}
+                                Data extracted with Claude Vision AI
+                            {% elif provider == 'mistral' %}
+                                Data extracted with Mistral OCR
+                            {% else %}
+                                Data extracted with Gemini Vision AI
+                            {% endif %}
+                        </strong>
                     </div>
                     
                     <div class="accordion mt-3" id="ocrAccordion">

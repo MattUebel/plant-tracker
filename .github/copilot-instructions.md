@@ -1,4 +1,4 @@
-- @azure Rule - Use Azure Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `get_azure_best_practices` tool if available.
+- @azure Rule - Use Azure Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `azure_development-get_best_practices` tool if available.
 
 - This is a Plant Tracker application for managing seeds and plantings in a garden. It runs in docker containers. Always use the CLI tool to run "docker compose" commands to interact with the app or review the logs.
 

@@ -25,11 +25,22 @@
     <div class="card">
         <div class="card-body">
             <h5 class="card-title">Upload a seed packet image for processing</h5>
-            <p class="card-text">Upload an image of a seed packet to automatically extract seed information using Gemini AI. You'll be able to review and adjust the extracted data before saving.</p>
+            <p class="card-text">
+                Upload an image of a seed packet to automatically extract seed information using <span id="provider-display">Gemini AI</span>. You'll be able to review and adjust the extracted data before saving.
+            </p>
             
             <form action="/seed-packets/process" method="POST" enctype="multipart/form-data" class="mt-4" id="upload-form">
                 <div class="mb-3">
                     <label for="seed_packet" class="form-label">Seed Packet Image</label>
+                    <!-- Provider selection dropdown -->
+                    <div class="mb-3">
+                        <label for="provider" class="form-label">OCR Provider</label>
+                        <select class="form-select" id="provider" name="provider">
+                            <option value="gemini" selected>Gemini</option>
+                            <option value="claude">Claude</option>
+                            <option value="mistral">Mistral</option>
+                        </select>
+                    </div>
                     <input type="file" class="form-control d-none" id="seed_packet" name="seed_packet" accept="image/*" required>
                     <div class="d-flex flex-column flex-md-row gap-2 mb-2" id="image-upload-buttons">
                         <button type="button" class="btn btn-primary w-100" id="take-photo-btn">
@@ -70,15 +81,12 @@
     <div id="loading-overlay" class="d-none position-fixed top-0 start-0 w-100 h-100" style="background-color: rgba(0,0,0,0.5); z-index: 9999;">
         <div class="d-flex justify-content-center align-items-center h-100">
             <div class="card p-4 text-center">
+                <!-- Spinner and message -->
                 <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <h5 class="mb-0">Processing Seed Packet</h5>
-                <p class="text-muted mt-2 mb-0" id="loading-message">Uploading image...</p>
-                <div class="progress mt-3" style="height: 10px;">
-                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                </div>
-                <p class="text-muted mt-2 mb-0" id="progress-message">Starting process...</p>
+                <p class="text-muted mt-2 mb-0" id="loading-message">Processing...</p>
             </div>
         </div>
     </div>
@@ -133,26 +141,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('upload-form');
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingMessage = document.getElementById('loading-message');
-    const progressBar = document.getElementById('progress-bar');
-    const progressMessage = document.getElementById('progress-message');
     form.addEventListener('submit', function(e) {
         if (seedPacketInput && seedPacketInput.files.length > 0) {
             loadingOverlay.classList.remove('d-none');
-            updateProgress(10, "Uploading image...");
-            setTimeout(() => { updateProgress(30, "Preprocessing image..."); }, 1500);
-            setTimeout(() => { updateProgress(60, "Extracting structured data with Gemini AI..."); }, 4000);
-            setTimeout(() => { updateProgress(85, "Finalizing and saving results..."); }, 9000);
-            setTimeout(() => {
-                if (loadingOverlay.classList.contains('d-none') === false) {
-                    updateProgress(95, "Almost there... (processing is taking longer than usual)");
-                }
-            }, 20000);
+            loadingMessage.textContent = "Processing...";
         }
     });
-    function updateProgress(percent, message) {
-        progressBar.style.width = percent + '%';
-        progressMessage.textContent = message;
-    }
+    // Update provider display text when selection changes
+    const providerSelect = document.getElementById('provider');
+    const providerDisplay = document.getElementById('provider-display');
+    providerSelect.addEventListener('change', () => {
+        const val = providerSelect.value;
+        const text = val === 'claude' ? 'Claude Vision AI' : val === 'mistral' ? 'Mistral OCR' : 'Gemini AI';
+        providerDisplay.textContent = text;
+    });
 });
 </script>
 {% endblock %}

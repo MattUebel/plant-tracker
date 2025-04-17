@@ -51,7 +51,7 @@ class SeedPacketProcessor:
             logger.info(f"API key for {self.vision_api_provider} is configured")
 
     async def process_seed_packet(
-        self, image_data: bytes, filename: str
+        self, image_data: bytes, filename: str, provider: Optional[str] = None
     ) -> Tuple[Dict[str, Any], str]:
         """
         Process a seed packet image to extract structured data.
@@ -86,18 +86,26 @@ class SeedPacketProcessor:
             # Preprocessing (if any) is handled in image_processor
             vision_start = time.perf_counter()
             try:
+                # Use selected provider (form override) or configured default
                 _, structured_data = (
-                    await image_processor.process_image_with_vision_api(file_path)
+                    await image_processor.process_image_with_vision_api(
+                        file_path, provider=provider
+                    )
                 )
                 vision_end = time.perf_counter()
+                # Determine provider name for logging
+                chosen = provider or self.vision_api_provider
+                provider_name = chosen.capitalize()
                 logger.info(
-                    f"Structured data extracted (Gemini API call time: {vision_end-vision_start:.2f}s)"
+                    f"Structured data extracted ({provider_name} API call time: {vision_end-vision_start:.2f}s)"
                 )
                 logger.info(f"Structured data: {json.dumps(structured_data)[:200]}...")
             except Exception as e:
                 vision_end = time.perf_counter()
+                chosen = provider or self.vision_api_provider
+                provider_name = chosen.capitalize()
                 logger.error(
-                    f"Error during vision API processing: {str(e)} (Gemini API call time: {vision_end-vision_start:.2f}s)"
+                    f"Error during vision API processing: {str(e)} ({provider_name} API call time: {vision_end-vision_start:.2f}s)"
                 )
                 structured_data = None
 

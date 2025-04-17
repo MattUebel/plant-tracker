@@ -134,27 +134,22 @@ create_env_file() {
         # Source the environment file to get variables
         source "$ENV_FILE"
         
-        # Check if required configuration exists
-        if [ -z "$GEMINI_API_KEY" ] || [ "$GEMINI_API_KEY" = "your_api_key_here" ]; then
-            echo -e "\e[31mError: GEMINI_API_KEY is not set in $ENV_FILE\e[0m"
-            echo "The Plant Tracker requires a Gemini API key for OCR functionality."
-            echo -e "Please get an API key from \e[36mhttps://makersuite.google.com/\e[0m"
-            echo -e "Then edit $ENV_FILE and set the GEMINI_API_KEY value.\n"
-            
-            read -p "Would you like to continue installation without OCR functionality? (y/N): " CONTINUE
-            
-            if [[ ! $CONTINUE =~ ^[Yy]$ ]]; then
-                echo "Installation aborted. Please update the .env file and run the script again."
-                exit 1
-            fi
-            
-            echo "Continuing installation without OCR functionality..."
+        # Verify required API keys are set
+        missing=()
+        if [ -z "$GEMINI_API_KEY" ] || [ "$GEMINI_API_KEY" = "your_api_key_here" ]; then missing+=("GEMINI_API_KEY"); fi
+        if [ -z "$ANTHROPIC_API_KEY" ] || [ "$ANTHROPIC_API_KEY" = "your_api_key_here" ]; then missing+=("ANTHROPIC_API_KEY"); fi
+        if [ -z "$MISTRAL_API_KEY" ] || [ "$MISTRAL_API_KEY" = "your_api_key_here" ]; then missing+=("MISTRAL_API_KEY"); fi
+        if [ ${#missing[@]} -gt 0 ]; then
+            echo -e "\e[31mError: The following API keys are not set in $ENV_FILE: ${missing[*]}\e[0m"
+            echo "Please edit $ENV_FILE and add these keys before continuing."
+            exit 1
         else
             echo "Required API keys are present in .env file."
         fi
     else
         echo ".env file doesn't exist. Creating template..."
         
+        # Create the .env template
         cat > "$ENV_FILE" << EOL
 # Database configuration
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -175,8 +170,13 @@ GEMINI_MODEL=gemini-2.5-pro
 
 # Optional: Anthropic API key (alternative OCR provider)
 # Get API key from https://console.anthropic.com/
-ANTHROPIC_API_KEY=
+ANTHROPIC_API_KEY=your_api_key_here
 CLAUDE_MODEL=claude-3-7-sonnet-20250219
+
+# Optional: Mistral API key (alternative OCR provider)
+# Get API key from https://mistral.ai/
+MISTRAL_API_KEY=your_api_key_here
+MISTRAL_MODEL=mistral-1-0
 
 # Default OCR provider
 VISION_API_PROVIDER=gemini
@@ -203,8 +203,13 @@ EOL
         echo -e "\n\e[34mVerifying API key configuration...\e[0m"
         source "$ENV_FILE"
         
-        if [ -z "$GEMINI_API_KEY" ] || [ "$GEMINI_API_KEY" = "your_api_key_here" ]; then
-            echo -e "\e[31mError: GEMINI_API_KEY is still not configured in $ENV_FILE\e[0m"
+        # Verify required API keys are set
+        missing=()
+        if [ -z "$GEMINI_API_KEY" ] || [ "$GEMINI_API_KEY" = "your_api_key_here" ]; then missing+=("GEMINI_API_KEY"); fi
+        if [ -z "$ANTHROPIC_API_KEY" ] || [ "$ANTHROPIC_API_KEY" = "your_api_key_here" ]; then missing+=("ANTHROPIC_API_KEY"); fi
+        if [ -z "$MISTRAL_API_KEY" ] || [ "$MISTRAL_API_KEY" = "your_api_key_here" ]; then missing+=("MISTRAL_API_KEY"); fi
+        if [ ${#missing[@]} -gt 0 ]; then
+            echo -e "\e[31mError: The following API keys are not set in $ENV_FILE: ${missing[*]}\e[0m"
             echo "Installation aborted. Please update the .env file and run the script again."
             exit 1
         fi
