@@ -581,6 +581,62 @@ class ImageProcessor:
                 error_msg = f"Error processing with Gemini Vision API: {str(e)}"
                 logger.error(error_msg)
                 return error_msg, None
+
+        elif self.vision_api_provider == "mistral":
+            try:
+                # Import Mistral testers dynamically
+                from utils.test_vision_api import MistralOCRTester, MistralVisionTester
+
+                # Initialize testers
+                ocr_tester = MistralOCRTester()
+                vision_tester = MistralVisionTester()
+
+                # Extract OCR text
+                logger.info(f"Extracting OCR text with Mistral from: {image_path}")
+                ocr_result = await ocr_tester.extract_text(image_path)
+                # Aggregate pages or text field
+                ocr_text = ""
+                if isinstance(ocr_result, dict) and "pages" in ocr_result:
+                    for page in ocr_result["pages"]:
+                        ocr_text += page.get("markdown", "")
+                else:
+                    ocr_text = (
+                        ocr_result.get("text", "")
+                        if isinstance(ocr_result, dict)
+                        else str(ocr_result)
+                    )
+
+                # Extract structured data
+                logger.info(
+                    f"Extracting structured data with Mistral from: {image_path}"
+                )
+                # Use same JSON schema as other providers
+                schema = {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "variety": {"type": ["string", "null"]},
+                        "brand": {"type": ["string", "null"]},
+                        "germination_rate": {"type": ["number", "null"]},
+                        "maturity": {"type": ["integer", "null"]},
+                        "growth": {"type": ["string", "null"]},
+                        "seed_depth": {"type": ["number", "null"]},
+                        "spacing": {"type": ["number", "null"]},
+                        "quantity": {"type": ["integer", "null"]},
+                        "notes": {"type": ["string", "null"]},
+                    },
+                }
+                structured_data = await vision_tester.extract_structured_data_from_ocr(
+                    ocr_text, schema
+                )
+
+                logger.info("Successfully processed image with Mistral Vision API")
+                return ocr_text, structured_data
+            except Exception as e:
+                error_msg = f"Error processing with Mistral Vision API: {str(e)}"
+                logger.error(error_msg)
+                return error_msg, None
+
         else:
             error_msg = f"Unsupported vision API provider: {self.vision_api_provider}"
             logger.error(error_msg)

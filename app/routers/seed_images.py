@@ -91,6 +91,7 @@ async def upload_seed_image(
     seed_id: int,
     request: Request,
     image: UploadFile = File(...),
+    provider: str = Form(None),
     process_ocr: bool = Form(False),
     preview_mode: bool = Form(False),
     db: AsyncSession = Depends(get_db),
@@ -124,7 +125,9 @@ async def upload_seed_image(
 
         # Process image with configured Vision API if requested
         if process_ocr:
-            # Use the vision API provider configured in environment variables
+            # Override provider based on user selection
+            if provider:
+                image_processor.vision_api_provider = provider.lower()
             ocr_text, structured_data = (
                 await image_processor.process_image_with_vision_api(
                     image_data["file_path"]
@@ -250,7 +253,11 @@ async def process_image_ocr(
     if not image:
         raise HTTPException(status_code=404, detail="Image not found")
 
-    # Process with the configured vision API provider
+    # Determine provider from form or default
+    form = await request.form()
+    selected = form.get("provider")
+    if selected:
+        image_processor.vision_api_provider = selected.lower()
     ocr_text, structured_data = await image_processor.process_image_with_vision_api(
         image.file_path
     )
