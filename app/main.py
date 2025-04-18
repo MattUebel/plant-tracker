@@ -16,7 +16,8 @@ from routers.seeds import router as seeds_router
 from routers.images import router as images_router
 from routers.seed_images import router as seed_images_router
 from routers.plantings import router as plantings_router
-from routers.seed_packets import router as seed_packets_router  # Add new router
+from routers.seed_packets import router as seed_packets_router
+from routers.bulk_import import router as bulk_import_router
 from models.seed import Seed
 from models.planting import Planting
 from database import get_db
@@ -41,7 +42,8 @@ app.include_router(seeds_router, tags=["seeds"])
 app.include_router(images_router, prefix="/images", tags=["images"])
 app.include_router(seed_images_router, tags=["seed_images"])
 app.include_router(plantings_router, tags=["plantings"])
-app.include_router(seed_packets_router, tags=["seed_packets"])  # Add new router
+app.include_router(seed_packets_router, tags=["seed_packets"])
+app.include_router(bulk_import_router, tags=["bulk_import"])
 
 
 @app.get("/", response_class=HTMLResponse)
