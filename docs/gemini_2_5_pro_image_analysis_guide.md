@@ -1,12 +1,12 @@
 # Gemini 2.5 Pro Image Analysis Guide
 
-## Overview of gemini-2.5-pro-exp-03-25
+## Overview of gemini-2.5-pro-preview-03-25
 
-The `gemini-2.5-pro-exp-03-25` model is Google's advanced multimodal AI model that excels at analyzing images and extracting structured information. Released in March 2025, this model features enhanced capabilities for understanding visual content and generating accurate, structured responses.
+The `gemini-2.5-pro-preview-03-25` model is Google's advanced multimodal AI model that excels at analyzing images and extracting structured information. Released in March 2025, this model features enhanced capabilities for understanding visual content and generating accurate, structured responses.
 
 ## Technical Specifications
 
-- **Model Name**: `gemini-2.5-pro-exp-03-25`
+- **Model Name**: `gemini-2.5-pro-preview-03-25`
 - **Type**: Multimodal Large Language Model
 - **Capabilities**: Text generation, code generation, image understanding, structured data extraction
 - **Context Window**: Extensive (supports multiple images with detailed text)
@@ -35,7 +35,7 @@ import google.generativeai as genai
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Create the model instance
-model = genai.GenerativeModel("gemini-2.5-pro-exp-03-25")
+model = genai.GenerativeModel("gemini-2.5-pro-preview-03-25")
 ```
 
 ## Best Practices for Image Analysis

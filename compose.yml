@@ -20,7 +20,7 @@ services:
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-3-7-sonnet-20250219}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-pro-exp-03-25}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-pro-preview-03-25} # Updated model
       - VISION_API_PROVIDER=${VISION_API_PROVIDER:-gemini}  # Use .env setting with fallback to gemini
       # - BULK_IMPORT_API_KEY=your_secret_key_here # Uncomment and set a secure key
       # Add other environment variables as needed

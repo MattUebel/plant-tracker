@@ -6,7 +6,7 @@
 
 ## 1. Introduction
 
-This document outlines the process for leveraging Google's advanced multimodal capabilities, specifically using the **`gemini-2.5-pro-exp-03-25`** experimental model, to extract structured information from images of garden seed packets. Given your background in tech and security, you'll appreciate how this technique can automate data entry and analysis from visual sources.
+This document outlines the process for leveraging Google's advanced multimodal capabilities, specifically using the **`gemini-2.5-pro-preview-03-25`** model, to extract structured information from images of garden seed packets. Given your background in tech and security, you'll appreciate how this technique can automate data entry and analysis from visual sources.
 
 The core approach involves sending both the image and a carefully crafted text prompt (requesting specific data fields in a structured format like JSON) to the Gemini API via the `google-generativeai` Python SDK.
 
@@ -56,7 +56,7 @@ except Exception as e:
 
 # --- Specify the Model ---
 # Using the requested experimental model
-model_name = "gemini-2.5-pro-exp-03-25"
+model_name = "gemini-2.5-pro-preview-03-25"
 print(f"Target Model: {model_name}")
 
 ```

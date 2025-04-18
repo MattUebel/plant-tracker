@@ -107,7 +107,7 @@ class ImageProcessor:
 class GeminiAPICaller:
     """Base class for Google Gemini API calls with retry logic."""
 
-    def __init__(self, model_name: str = "gemini-2.5-pro-exp-03-25"):
+    def __init__(self, model_name: str = "gemini-2.5-pro-preview-03-25"):
         self.api_key = os.getenv("GEMINI_API_KEY")
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY environment variable is not set")
@@ -179,7 +179,7 @@ class GeminiAPICaller:
 class GeminiVisionTester(GeminiAPICaller):
     """Test Gemini Vision API for image understanding and data extraction."""
 
-    def __init__(self, model_name: str = "gemini-2.5-pro-exp-03-25"):
+    def __init__(self, model_name: str = "gemini-2.5-pro-preview-03-25"):
         super().__init__(model_name)
 
     async def extract_ocr_text(self, image_path: str) -> Dict[str, Any]:
@@ -208,7 +208,9 @@ class GeminiVisionTester(GeminiAPICaller):
         else:
             return {"error": "Failed to extract OCR text", "response": str(response)}
 
-    async def extract_structured_data(self, image_path: str) -> Dict[str, Any]:
+    async def extract_structured_data(
+        self, image_path: str, genai_client=None
+    ) -> Dict[str, Any]:
         """
         Extract structured seed packet data from an image using Gemini Vision API.
         The data structure matches the application's Seed model schema.
@@ -380,7 +382,7 @@ class GeminiVisionTester(GeminiAPICaller):
 
 
 async def process_image(
-    image_path: str, model_name: str = "gemini-2.5-pro-exp-03-25", genai_client=None
+    image_path: str, model_name: str = "gemini-2.5-pro-preview-03-25", genai_client=None
 ) -> tuple:
     """
     Process an image with Gemini Vision API and extract both OCR text and structured data.
@@ -417,14 +419,14 @@ async def main():
         description="Test Gemini Vision API with seed packet images"
     )
     parser.add_argument(
-        "model_name",
-        nargs="?",
-        default="gemini-2.5-pro-exp-03-25",
-        help="Gemini model name to use (default: gemini-2.5-pro-exp-03-25)",
+        "--model",
+        type=str,
+        default="gemini-2.5-pro-preview-03-25",
+        help="Gemini model name to use (default: gemini-2.5-pro-preview-03-25)",
     )
     args = parser.parse_args()
 
-    model_name = args.model_name
+    model_name = args.model
     print(f"Using Gemini model: {model_name}")
 
     # Find available images in the uploads directory

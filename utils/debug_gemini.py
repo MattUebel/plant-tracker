@@ -18,9 +18,7 @@ logging.basicConfig(
 logger = logging.getLogger("gemini_debug")
 
 # Path to the image you want to test
-IMAGE_PATH = (
-    sys.argv[1] if len(sys.argv) > 1 else "uploads/seed_19_20250408182131_221b23fa.jpg"
-)
+IMAGE_PATH = "uploads/seed_20250416195516_49258714.jpg"  # Example image
 
 try:
     print(f"Debug script running - Python {sys.version}")
@@ -42,9 +40,11 @@ try:
         print("Configured Gemini API with key from environment")
 
         # Create model instance
-        model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro-exp-03-25")
+        model_name = os.environ.get(
+            "GEMINI_MODEL", "gemini-2.5-pro-preview-03-25"
+        )  # Updated default
         model = genai.GenerativeModel(model_name)
-        print(f"Created model instance with: {model_name}")
+        print(f"Using model: {model_name}")
 
     except ImportError as e:
         print(f"Error importing google.generativeai: {e}")

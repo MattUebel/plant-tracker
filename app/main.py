@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload  # Import selectinload
 
 # Add current directory to Python path to ensure imports work in Docker
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -54,9 +55,10 @@ async def root(request: Request, db: AsyncSession = Depends(get_db)):
     )
     recent_seeds = seeds_result.unique().scalars().all()
 
-    # Fetch 3 most recently updated/created plantings
+    # Fetch 3 most recently updated/created plantings, eagerly loading the seed relationship
     plantings_result = await db.execute(
         select(Planting)
+        .options(selectinload(Planting.seed))  # Eagerly load the seed relationship
         .order_by(Planting.updated_at.desc(), Planting.created_at.desc())
         .limit(3)
     )

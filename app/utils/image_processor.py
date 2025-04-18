@@ -41,7 +41,13 @@ class ImageProcessor:
 
         # Gemini API configuration
         self.gemini_api_key = os.getenv("GEMINI_API_KEY")
-        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-pro-exp-03-25")
+        self.gemini_model = os.getenv(
+            "GEMINI_MODEL", "gemini-2.5-pro-preview-03-25"
+        )  # Updated default
+
+        self.mistral_model = os.getenv(
+            "MISTRAL_MODEL", "mistral-large-latest"
+        )  # Placeholder
 
         self.max_retries = 3
         self.initial_retry_delay = 1.0
