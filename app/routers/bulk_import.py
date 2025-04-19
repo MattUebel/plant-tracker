@@ -11,6 +11,7 @@ from models.image import Image
 from utils.seed_packet_processor import seed_packet_processor
 import logging
 import json
+from typing import Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -26,7 +27,8 @@ router = APIRouter(
 async def process_bulk_image(
     request: Request,
     image_file: UploadFile = File(...),
-    provider: str = "gemini",  # Default provider, can be overridden if needed
+    provider: Optional[str] = None,  # Accept optional provider
+    model: Optional[str] = None,  # Accept optional model
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -34,7 +36,14 @@ async def process_bulk_image(
     NOTE: This endpoint is currently unsecured.
     """
     log_prefix = "[/bulk-import/process-image]"
+    # Determine the provider to use: query param > default (None for processor)
+    effective_provider = (
+        provider  # Pass None if not specified, processor will use its default
+    )
     logger.info(f"{log_prefix} Received request for file: {image_file.filename}")
+    logger.info(
+        f"{log_prefix} Processing {image_file.filename} using provider: {effective_provider or 'default'}, model: {model or 'default'}"
+    )
     try:
         # Read image data
         image_data = await image_file.read()
@@ -44,12 +53,12 @@ async def process_bulk_image(
             )
             raise HTTPException(status_code=400, detail="Empty image file received.")
 
-        logger.info(
-            f"{log_prefix} Processing {image_file.filename} using provider: {provider}"
-        )
-        # Process using the existing seed packet processor
+        # Process using the existing seed packet processor, passing provider and model
         structured_data, file_path = await seed_packet_processor.process_seed_packet(
-            image_data, filename=image_file.filename, provider=provider
+            image_data,
+            filename=image_file.filename,
+            provider=effective_provider,
+            model=model,
         )
 
         if not structured_data:

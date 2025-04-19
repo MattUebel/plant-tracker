@@ -282,7 +282,7 @@ class ImageProcessor:
                 return f.read()
 
     async def call_claude_api_with_retry(
-        self, image_path: str, prompt: str
+        self, image_path: str, prompt: str, model_name: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Call Claude API with an image and prompt using exponential backoff retry logic.
@@ -291,6 +291,7 @@ class ImageProcessor:
         Args:
             image_path: Path to the image file
             prompt: The prompt to send to Claude
+            model_name: Optional specific model name to use
 
         Returns:
             Claude API response
@@ -306,6 +307,7 @@ class ImageProcessor:
         current_max_size = (
             self.claude_max_size * 0.9
         )  # Start with 90% of max allowed size (safety margin)
+        effective_model = model_name or self.claude_model
 
         while retries <= self.max_retries:
             try:
@@ -333,10 +335,10 @@ class ImageProcessor:
 
                 # Call the API with the processed image
                 logger.info(
-                    f"Calling Claude API (model: {self.claude_model}, attempt {retries+1}/{self.max_retries+1})..."
+                    f"Calling Claude API (model: {effective_model}, attempt {retries+1}/{self.max_retries+1})..."
                 )
                 response = self.client.messages.create(
-                    model=self.claude_model,
+                    model=effective_model,
                     max_tokens=4000,
                     messages=[
                         {
@@ -386,7 +388,7 @@ class ImageProcessor:
         return {"error": "Max retries exceeded with unknown error"}
 
     async def process_ocr(
-        self, image_path: str
+        self, image_path: str, model_name: Optional[str] = None
     ) -> Tuple[str, Optional[Dict[str, Any]]]:
         """Process image with Claude Vision API and extract text and structured data"""
         if not self.anthropic_api_key:
@@ -405,7 +407,9 @@ class ImageProcessor:
             Focus only on the text content - do not analyze or interpret the information.
             """
 
-            ocr_response = await self.call_claude_api_with_retry(image_path, ocr_prompt)
+            ocr_response = await self.call_claude_api_with_retry(
+                image_path, ocr_prompt, model_name=model_name
+            )
 
             if "error" in ocr_response:
                 error_msg = f"Error during OCR extraction: {ocr_response['error']}"
@@ -423,7 +427,9 @@ class ImageProcessor:
                 return error_msg, None
 
             # Now extract structured data
-            structured_data = await self.extract_structured_data(image_path)
+            structured_data = await self.extract_structured_data(
+                image_path, model_name=model_name
+            )
 
             return ocr_text, structured_data
 
@@ -433,7 +439,7 @@ class ImageProcessor:
             return error_msg, None
 
     async def extract_structured_data(
-        self, image_path: str
+        self, image_path: str, model_name: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """Extract structured data from an image using Claude Vision API"""
         try:
@@ -463,7 +469,7 @@ class ImageProcessor:
             """
 
             structured_response = await self.call_claude_api_with_retry(
-                image_path, structured_prompt
+                image_path, structured_prompt, model_name=model_name
             )
 
             if "error" in structured_response:
@@ -504,21 +510,25 @@ class ImageProcessor:
             return None
 
     async def process_image_with_vision_api(
-        self, image_path: str
+        self,
+        image_path: str,
+        provider: Optional[str] = None,
+        model_name: Optional[str] = None,
     ) -> Tuple[str, Optional[Dict[str, Any]]]:
         """Process image with the configured Vision API and extract text and structured data"""
+        effective_provider = (provider or self.vision_api_provider).lower()
         logger.info(
-            f"Processing image with {self.vision_api_provider.upper()} Vision API: {image_path}"
+            f"Processing image with {effective_provider.upper()} Vision API (Model: {model_name or 'default'}) for: {image_path}"
         )
 
-        if self.vision_api_provider == "claude":
+        if effective_provider == "claude":
             if not self.anthropic_api_key or not self.client:
                 error_msg = "Claude API key not configured. Set ANTHROPIC_API_KEY in your environment."
                 logger.error(error_msg)
                 return error_msg, None
-            return await self.process_ocr(image_path)
+            return await self.process_ocr(image_path, model_name=model_name)
 
-        elif self.vision_api_provider == "gemini":
+        elif effective_provider == "gemini":
             if not self.gemini_api_key or not self.gemini_client:
                 error_msg = "Gemini API key not configured. Set GEMINI_API_KEY in your environment."
                 logger.error(error_msg)
@@ -532,24 +542,24 @@ class ImageProcessor:
                 # Add the current directory to the path to ensure modules can be found
                 sys.path.insert(0, os.getcwd())
 
-                # Enhanced Gemini processing - try both methods for better results
+                effective_model = model_name or self.gemini_model
                 try:
                     # Import the Gemini module directly
                     from utils.gemini_vision_api import GeminiVisionTester
 
-                    # Initialize the vision tester with the configured model
-                    vision_tester = GeminiVisionTester(self.gemini_model)
+                    # Initialize the vision tester with the effective model
+                    vision_tester = GeminiVisionTester(effective_model)
 
                     # First get OCR text
                     logger.info(
-                        f"Extracting OCR text with Gemini (model: {self.gemini_model}) from: {image_path}"
+                        f"Extracting OCR text with Gemini (model: {effective_model}) from: {image_path}"
                     )
                     ocr_result = await vision_tester.extract_ocr_text(image_path)
                     ocr_text = ocr_result.get("text", "Error extracting OCR text")
 
                     # Try extracting structured data with enhanced method
                     logger.info(
-                        f"Extracting structured data with Gemini (model: {self.gemini_model}) from: {image_path}"
+                        f"Extracting structured data with Gemini (model: {effective_model}) from: {image_path}"
                     )
                     structured_data = await vision_tester.extract_structured_data(
                         image_path
@@ -581,8 +591,9 @@ class ImageProcessor:
                     )
                     from utils.gemini_vision_api import process_image
 
+                    # Pass the effective model to the fallback function
                     return await process_image(
-                        image_path, self.gemini_model, self.gemini_client
+                        image_path, effective_model, self.gemini_client
                     )
 
             except Exception as e:
@@ -590,10 +601,12 @@ class ImageProcessor:
                 logger.error(error_msg)
                 return error_msg, None
 
-        elif self.vision_api_provider == "mistral":
+        elif effective_provider == "mistral":
             try:
                 # Import Mistral testers dynamically
                 from utils.test_vision_api import MistralOCRTester, MistralVisionTester
+
+                effective_model = model_name or self.mistral_model
 
                 # Initialize testers
                 ocr_tester = MistralOCRTester()
@@ -601,10 +614,11 @@ class ImageProcessor:
 
                 # Extract OCR text
                 logger.info(
-                    f"Extracting OCR text with Mistral (model: {self.mistral_model}) from: {image_path}"
+                    f"Extracting OCR text with Mistral (model: {effective_model}) from: {image_path}"
                 )
-                ocr_result = await ocr_tester.extract_text(image_path)
-                # Aggregate pages or text field
+                ocr_result = await ocr_tester.extract_text(
+                    image_path, model=effective_model
+                )
                 ocr_text = ""
                 if isinstance(ocr_result, dict) and "pages" in ocr_result:
                     for page in ocr_result["pages"]:
@@ -618,9 +632,8 @@ class ImageProcessor:
 
                 # Extract structured data
                 logger.info(
-                    f"Extracting structured data with Mistral (model: {self.mistral_model}) from: {image_path}"
+                    f"Extracting structured data with Mistral (model: {effective_model}) from: {image_path}"
                 )
-                # Use same JSON schema as other providers
                 schema = {
                     "type": "object",
                     "properties": {
@@ -637,7 +650,7 @@ class ImageProcessor:
                     },
                 }
                 structured_data = await vision_tester.extract_structured_data_from_ocr(
-                    ocr_text, schema
+                    ocr_text, schema, model=effective_model
                 )
 
                 logger.info("Successfully processed image with Mistral Vision API")
@@ -648,7 +661,7 @@ class ImageProcessor:
                 return error_msg, None
 
         else:
-            error_msg = f"Unsupported vision API provider: {self.vision_api_provider}"
+            error_msg = f"Unsupported vision API provider: {effective_provider}"
             logger.error(error_msg)
             return error_msg, None
 

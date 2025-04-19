@@ -51,7 +51,11 @@ class SeedPacketProcessor:
             logger.info(f"API key for {self.vision_api_provider} is configured")
 
     async def process_seed_packet(
-        self, image_data: bytes, filename: str, provider: Optional[str] = None
+        self,
+        image_data: bytes,
+        filename: str,
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], str]:
         """
         Process a seed packet image to extract structured data.
@@ -59,6 +63,8 @@ class SeedPacketProcessor:
         Args:
             image_data: The binary image data
             filename: Original filename of the uploaded file
+            provider: Optional vision API provider override
+            model: Optional specific model name override
 
         Returns:
             Tuple of (structured_data, file_path)
@@ -89,7 +95,7 @@ class SeedPacketProcessor:
                 # Use selected provider (form override) or configured default
                 _, structured_data = (
                     await image_processor.process_image_with_vision_api(
-                        file_path, provider=provider
+                        file_path, provider=provider, model_name=model
                     )
                 )
                 vision_end = time.perf_counter()

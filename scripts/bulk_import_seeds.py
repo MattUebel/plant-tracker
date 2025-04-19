@@ -18,6 +18,7 @@ import argparse
 import logging
 from pathlib import Path
 from mimetypes import guess_type
+from typing import Optional
 
 # Configure logging
 logging.basicConfig(
@@ -33,9 +34,20 @@ ENDPOINT = "/bulk-import/process-image"
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
 
 
-def process_image(image_path: Path, base_url: str):
+def process_image(
+    image_path: Path,
+    base_url: str,
+    provider: Optional[str] = None,
+    model: Optional[str] = None,
+):
     """Sends a single image to the bulk import API endpoint."""
     url = f"{base_url.rstrip('/')}{ENDPOINT}"
+    params = {}
+    if provider:
+        params["provider"] = provider
+    if model:
+        params["model"] = model
+
     mime_type, _ = guess_type(image_path)
     if not mime_type or not mime_type.startswith("image/"):
         logger.warning(f"Skipping non-image file: {image_path.name}")
@@ -45,8 +57,8 @@ def process_image(image_path: Path, base_url: str):
         with open(image_path, "rb") as f:
             files = {"image_file": (image_path.name, f, mime_type)}
             response = requests.post(
-                url, files=files, timeout=120
-            )  # Increased timeout for potentially long OCR
+                url, files=files, params=params, timeout=120
+            )  # Increased timeout, added params
 
         if response.status_code == 200:
             logger.info(
@@ -81,6 +93,16 @@ def main():
     parser.add_argument(
         "image_directory", type=str, help="Directory containing seed packet images."
     )
+    parser.add_argument(
+        "--provider",
+        type=str,
+        help="Vision API provider to use (e.g., claude, gemini, mistral). Overrides server default.",
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        help="Specific model name to use. Overrides server default for the chosen provider.",
+    )
     args = parser.parse_args()
 
     if not APP_URL:
@@ -104,7 +126,9 @@ def main():
         if item.is_file() and item.suffix.lower() in SUPPORTED_EXTENSIONS:
             total_files += 1
             logger.info(f"Processing file: {item.name}...")
-            success, result = process_image(item, APP_URL)
+            success, result = process_image(
+                item, APP_URL, args.provider, args.model
+            )  # Pass args
             if success:
                 success_count += 1
             else:
