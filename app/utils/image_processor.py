@@ -46,8 +46,11 @@ class ImageProcessor:
         )  # Updated default
 
         self.mistral_model = os.getenv(
-            "MISTRAL_MODEL", "mistral-large-latest"
-        )  # Placeholder
+            "MISTRAL_MODEL", "pixtral-large-latest"
+        )  # Use pixtral as default
+
+        # Mistral API Key
+        self.mistral_api_key = os.getenv("MISTRAL_API_KEY")
 
         self.max_retries = 3
         self.initial_retry_delay = 1.0
@@ -63,6 +66,7 @@ class ImageProcessor:
         # Initialize API clients based on provider configuration
         self.client = None
         self.gemini_client = None
+        self.mistral_client = None  # Add mistral client placeholder
 
         # Log configuration status for the selected provider
         logger.info(f"Vision API provider configured: {self.vision_api_provider}")
@@ -101,6 +105,26 @@ class ImageProcessor:
             else:
                 logger.warning(
                     "GEMINI_API_KEY not found in environment variables. Gemini image processing will not work."
+                )
+        elif self.vision_api_provider == "mistral":
+            if self.mistral_api_key:
+                try:
+                    from mistralai.client import MistralClient
+                    from mistralai.models.chat_completion import ChatMessage
+
+                    self.mistral_client = MistralClient(api_key=self.mistral_api_key)
+                    logger.info(
+                        f"MISTRAL_API_KEY configured successfully, using model: {self.mistral_model}"
+                    )
+                except ImportError:
+                    logger.warning(
+                        "Failed to import mistralai. Please install it with: pip install mistralai"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to initialize Mistral client: {str(e)}")
+            else:
+                logger.warning(
+                    "MISTRAL_API_KEY not found in environment variables. Mistral image processing will not work."
                 )
         else:
             logger.warning(
@@ -387,127 +411,120 @@ class ImageProcessor:
 
         return {"error": "Max retries exceeded with unknown error"}
 
-    async def process_ocr(
-        self, image_path: str, model_name: Optional[str] = None
-    ) -> Tuple[str, Optional[Dict[str, Any]]]:
-        """Process image with Claude Vision API and extract text and structured data"""
-        if not self.anthropic_api_key:
-            error_msg = "No Anthropic API key found in environment variables. Set ANTHROPIC_API_KEY in your environment."
+    async def call_mistral_chat_api_with_retry(
+        self, image_path: str, prompt: str, model_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Call Mistral Chat API with an image and prompt using exponential backoff retry logic.
+        Uses a single call with a multimodal model (like pixtral).
+
+        Args:
+            image_path: Path to the image file
+            prompt: The prompt to send (including schema instructions)
+            model_name: Optional specific model name to use
+
+        Returns:
+            Mistral API response content as a dictionary or an error dict
+        """
+        if not self.mistral_client:
+            error_msg = "Mistral API key/client not configured. Set MISTRAL_API_KEY and install mistralai."
             logger.error(error_msg)
-            return error_msg, None
+            return {"error": error_msg}
+
+        retries = 0
+        delay = self.initial_retry_delay
+        last_exception = None
+        effective_model = model_name or self.mistral_model
 
         try:
-            # First, extract OCR text
-            logger.info(f"Extracting OCR text from image: {image_path}")
-
-            ocr_prompt = """
-            Perform OCR on this seed packet image. 
-            Extract ALL text visible in the image, preserving the layout as much as possible.
-            Include all product information, instructions, and details exactly as they appear.
-            Focus only on the text content - do not analyze or interpret the information.
-            """
-
-            ocr_response = await self.call_claude_api_with_retry(
-                image_path, ocr_prompt, model_name=model_name
+            # Encode the image
+            with open(image_path, "rb") as image_file:
+                base64_image = base64.b64encode(image_file.read()).decode("utf-8")
+            # Determine mime type (simple approach)
+            mime_type = (
+                "image/jpeg"
+                if image_path.lower().endswith((".jpg", ".jpeg"))
+                else "image/png"
             )
 
-            if "error" in ocr_response:
-                error_msg = f"Error during OCR extraction: {ocr_response['error']}"
-                logger.error(error_msg)
-                return error_msg, None
+        except Exception as e:
+            logger.error(f"Error encoding image {image_path}: {str(e)}")
+            return {"error": f"Failed to encode image: {str(e)}"}
 
-            if hasattr(ocr_response, "content") and len(ocr_response.content) > 0:
-                ocr_text = ocr_response.content[0].text
+        # Import ChatMessage here to avoid import errors if mistralai isn't installed
+        try:
+            from mistralai.models.chat_completion import ChatMessage
+        except ImportError:
+            logger.error(
+                "MistralAI client library not found. Please install with: pip install mistralai"
+            )
+            return {"error": "MistralAI library not installed"}
+
+        messages = [
+            ChatMessage(
+                role="user",
+                content=[
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": f"data:{mime_type};base64,{base64_image}",
+                    },
+                ],
+            )
+        ]
+
+        while retries <= self.max_retries:
+            try:
                 logger.info(
-                    f"Successfully extracted OCR text ({len(ocr_text)} characters)"
+                    f"Calling Mistral Chat API (model: {effective_model}, attempt {retries+1}/{self.max_retries+1})..."
                 )
-            else:
-                error_msg = "Failed to extract OCR text: Invalid API response format"
-                logger.error(error_msg)
-                return error_msg, None
-
-            # Now extract structured data
-            structured_data = await self.extract_structured_data(
-                image_path, model_name=model_name
-            )
-
-            return ocr_text, structured_data
-
-        except Exception as e:
-            error_msg = f"Error processing OCR: {str(e)}"
-            logger.error(error_msg)
-            return error_msg, None
-
-    async def extract_structured_data(
-        self, image_path: str, model_name: Optional[str] = None
-    ) -> Optional[Dict[str, Any]]:
-        """Extract structured data from an image using Claude Vision API"""
-        try:
-            logger.info(f"Extracting structured data from image: {image_path}")
-
-            # The structured data prompt
-            structured_prompt = """
-            Extract structured plant information from this seed packet image.
-            Return ONLY a valid JSON object matching the following fields and types:
-            {
-                "name": "The main name/type of the plant (e.g., Tomato, Basil) - String",
-                "variety": "The specific variety of the plant/seed - String",
-                "brand": "The brand or company that produced the seed packet - String",
-                "germination_rate": "The germination rate as a decimal between 0.0-1.0 (e.g., 0.85 for 85%) - Float",
-                "maturity": "Days to maturity/harvest as a number - Integer",
-                "growth": "Growth habit or pattern (e.g., Determinate, Bush, Vining) - String",
-                "seed_depth": "Recommended planting depth in inches - Float",
-                "spacing": "Recommended spacing between plants in inches - Float",
-                "quantity": "Number of seeds in the packet if mentioned - Integer",
-                "notes": "Additional important information from the packet - String"
-            }
-            
-            For the germination rate, if it's provided as a percentage (e.g., 85%), convert it to decimal (0.85).
-            For seed_depth and spacing, convert to inches if given in other units.
-            If any information is not available in the image, use null for that field.
-            Your response should be ONLY the JSON object with no additional text.
-            """
-
-            structured_response = await self.call_claude_api_with_retry(
-                image_path, structured_prompt, model_name=model_name
-            )
-
-            if "error" in structured_response:
-                logger.error(
-                    f"Error extracting structured data: {structured_response['error']}"
+                start_time = time.perf_counter()
+                chat_response = self.mistral_client.chat(
+                    model=effective_model,
+                    messages=messages,
+                    response_format={"type": "json_object"},
                 )
-                return None
-
-            if (
-                hasattr(structured_response, "content")
-                and len(structured_response.content) > 0
-            ):
-                # Extract JSON from response
-                content_text = structured_response.content[0].text
-                try:
-                    # Find JSON object in the response text (Claude might add text around the JSON)
-                    json_str = content_text
-                    if "```json" in json_str:
-                        json_str = json_str.split("```json")[1].split("```")[0].strip()
-                    elif "```" in json_str:
-                        json_str = json_str.split("```")[1].split("```")[0].strip()
-
-                    structured_data = json.loads(json_str)
-                    logger.info("Successfully extracted structured data from image")
-                    return structured_data
-                except json.JSONDecodeError as e:
-                    logger.error(f"Failed to parse JSON response: {str(e)}")
-                    logger.debug(f"Raw response: {content_text}")
-                    return None
-            else:
-                logger.error(
-                    "Failed to extract structured data: Invalid API response format"
+                end_time = time.perf_counter()
+                logger.info(
+                    f"Successfully received response from Mistral Chat API ({(end_time - start_time):.2f}s)"
                 )
-                return None
 
-        except Exception as e:
-            logger.error(f"Error extracting structured data: {str(e)}")
-            return None
+                if chat_response.choices and chat_response.choices[0].message.content:
+                    try:
+                        # The response content should be a JSON string
+                        structured_data = json.loads(
+                            chat_response.choices[0].message.content
+                        )
+                        return structured_data
+                    except json.JSONDecodeError as json_err:
+                        logger.error(f"Mistral response was not valid JSON: {json_err}")
+                        logger.debug(
+                            f"Raw Mistral response content: {chat_response.choices[0].message.content}"
+                        )
+                        return {"error": "Failed to parse JSON response from Mistral"}
+                else:
+                    logger.warning("Mistral API returned no content in choices.")
+                    return {"error": "Mistral API returned no content"}
+
+            except Exception as e:
+                # Check if it's a Mistral specific error if possible, otherwise generic handling
+                error_str = str(e)
+                logger.error(f"Mistral API call failed: {error_str}")
+                last_exception = e
+
+                if retries < self.max_retries:
+                    logger.info(f"Retrying Mistral call in {delay:.1f} seconds...")
+                    await asyncio.sleep(delay)
+                    delay *= 2  # Exponential backoff
+                    retries += 1
+                else:
+                    error_msg = (
+                        f"Max retries exceeded for Mistral API: {str(last_exception)}"
+                    )
+                    logger.error(error_msg)
+                    return {"error": error_msg}
+
+        return {"error": "Max retries exceeded for Mistral API with unknown error"}
 
     async def process_image_with_vision_api(
         self,
@@ -517,8 +534,11 @@ class ImageProcessor:
     ) -> Tuple[str, Optional[Dict[str, Any]]]:
         """Process image with the configured Vision API and extract text and structured data"""
         effective_provider = (provider or self.vision_api_provider).lower()
+        effective_model_name = model_name  # Keep explicit model if passed
+        log_model = effective_model_name or "default"
+
         logger.info(
-            f"Processing image with {effective_provider.upper()} Vision API (Model: {model_name or 'default'}) for: {image_path}"
+            f"Processing image with {effective_provider.upper()} Vision API (Model: {log_model}) for: {image_path}"
         )
 
         if effective_provider == "claude":
@@ -526,7 +546,7 @@ class ImageProcessor:
                 error_msg = "Claude API key not configured. Set ANTHROPIC_API_KEY in your environment."
                 logger.error(error_msg)
                 return error_msg, None
-            return await self.process_ocr(image_path, model_name=model_name)
+            return await self.process_ocr(image_path, model_name=effective_model_name)
 
         elif effective_provider == "gemini":
             if not self.gemini_api_key or not self.gemini_client:
@@ -542,7 +562,7 @@ class ImageProcessor:
                 # Add the current directory to the path to ensure modules can be found
                 sys.path.insert(0, os.getcwd())
 
-                effective_model = model_name or self.gemini_model
+                effective_model = effective_model_name or self.gemini_model
                 try:
                     # Import the Gemini module directly
                     from utils.gemini_vision_api import GeminiVisionTester
@@ -602,62 +622,56 @@ class ImageProcessor:
                 return error_msg, None
 
         elif effective_provider == "mistral":
+            if not self.mistral_api_key or not self.mistral_client:
+                error_msg = "Mistral API key/client not configured. Set MISTRAL_API_KEY and install mistralai."
+                logger.error(error_msg)
+                return error_msg, None
+
             try:
-                # Import Mistral testers dynamically
-                from utils.test_vision_api import MistralOCRTester, MistralVisionTester
-
-                effective_model = model_name or self.mistral_model
-
-                # Initialize testers
-                ocr_tester = MistralOCRTester()
-                vision_tester = MistralVisionTester()
-
-                # Extract OCR text
-                logger.info(
-                    f"Extracting OCR text with Mistral (model: {effective_model}) from: {image_path}"
-                )
-                ocr_result = await ocr_tester.extract_text(
-                    image_path, model=effective_model
-                )
-                ocr_text = ""
-                if isinstance(ocr_result, dict) and "pages" in ocr_result:
-                    for page in ocr_result["pages"]:
-                        ocr_text += page.get("markdown", "")
-                else:
-                    ocr_text = (
-                        ocr_result.get("text", "")
-                        if isinstance(ocr_result, dict)
-                        else str(ocr_result)
-                    )
-
-                # Extract structured data
-                logger.info(
-                    f"Extracting structured data with Mistral (model: {effective_model}) from: {image_path}"
-                )
-                schema = {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string"},
-                        "variety": {"type": ["string", "null"]},
-                        "brand": {"type": ["string", "null"]},
-                        "germination_rate": {"type": ["number", "null"]},
-                        "maturity": {"type": ["integer", "null"]},
-                        "growth": {"type": ["string", "null"]},
-                        "seed_depth": {"type": ["number", "null"]},
-                        "spacing": {"type": ["number", "null"]},
-                        "quantity": {"type": ["integer", "null"]},
-                        "notes": {"type": ["string", "null"]},
-                    },
+                # Define the structured data prompt for Mistral (similar to Claude/Gemini)
+                structured_prompt = """
+                Extract structured plant information from this seed packet image.
+                Return ONLY a valid JSON object matching the following fields and types:
+                {
+                    "name": "The main name/type of the plant (e.g., Tomato, Basil) - String",
+                    "variety": "The specific variety of the plant/seed - String",
+                    "brand": "The brand or company that produced the seed packet - String",
+                    "germination_rate": "The germination rate as a decimal between 0.0-1.0 (e.g., 0.85 for 85%) - Float",
+                    "maturity": "Days to maturity/harvest as a number - Integer",
+                    "growth": "Growth habit or pattern (e.g., Determinate, Bush, Vining) - String",
+                    "seed_depth": "Recommended planting depth in inches - Float",
+                    "spacing": "Recommended spacing between plants in inches - Float",
+                    "quantity": "Number of seeds in the packet if mentioned - Integer",
+                    "notes": "Additional important information from the packet - String"
                 }
-                structured_data = await vision_tester.extract_structured_data_from_ocr(
-                    ocr_text, schema, model=effective_model
+                
+                For the germination rate, if it's provided as a percentage (e.g., 85%), convert it to decimal (0.85).
+                For seed_depth and spacing, convert to inches if given in other units.
+                If any information is not available in the image, use null for that field.
+                Your response should be ONLY the JSON object with no additional text.
+                """
+
+                # Call the single-step Mistral chat API
+                structured_data_result = await self.call_mistral_chat_api_with_retry(
+                    image_path, structured_prompt, model_name=effective_model_name
                 )
 
-                logger.info("Successfully processed image with Mistral Vision API")
-                return ocr_text, structured_data
+                if "error" in structured_data_result:
+                    logger.error(
+                        f"Mistral processing failed: {structured_data_result['error']}"
+                    )
+                    # Return empty OCR text and None for structured data on failure
+                    return f"Mistral Error: {structured_data_result['error']}", None
+                else:
+                    logger.info(
+                        "Successfully processed image with Mistral Vision API (single step)"
+                    )
+                    # Return empty string for OCR text (as it's not extracted separately) and the structured data
+                    return "", structured_data_result
+
             except Exception as e:
                 error_msg = f"Error processing with Mistral Vision API: {str(e)}"
-                logger.error(error_msg)
+                logger.error(error_msg, exc_info=True)
                 return error_msg, None
 
         else:
