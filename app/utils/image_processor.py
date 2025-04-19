@@ -333,7 +333,7 @@ class ImageProcessor:
 
                 # Call the API with the processed image
                 logger.info(
-                    f"Calling Claude API (attempt {retries+1}/{self.max_retries+1})..."
+                    f"Calling Claude API (model: {self.claude_model}, attempt {retries+1}/{self.max_retries+1})..."
                 )
                 response = self.client.messages.create(
                     model=self.claude_model,
@@ -541,13 +541,15 @@ class ImageProcessor:
                     vision_tester = GeminiVisionTester(self.gemini_model)
 
                     # First get OCR text
-                    logger.info(f"Extracting OCR text with Gemini from: {image_path}")
+                    logger.info(
+                        f"Extracting OCR text with Gemini (model: {self.gemini_model}) from: {image_path}"
+                    )
                     ocr_result = await vision_tester.extract_ocr_text(image_path)
                     ocr_text = ocr_result.get("text", "Error extracting OCR text")
 
                     # Try extracting structured data with enhanced method
                     logger.info(
-                        f"Extracting structured data with Gemini from: {image_path}"
+                        f"Extracting structured data with Gemini (model: {self.gemini_model}) from: {image_path}"
                     )
                     structured_data = await vision_tester.extract_structured_data(
                         image_path
@@ -598,7 +600,9 @@ class ImageProcessor:
                 vision_tester = MistralVisionTester()
 
                 # Extract OCR text
-                logger.info(f"Extracting OCR text with Mistral from: {image_path}")
+                logger.info(
+                    f"Extracting OCR text with Mistral (model: {self.mistral_model}) from: {image_path}"
+                )
                 ocr_result = await ocr_tester.extract_text(image_path)
                 # Aggregate pages or text field
                 ocr_text = ""
@@ -614,7 +618,7 @@ class ImageProcessor:
 
                 # Extract structured data
                 logger.info(
-                    f"Extracting structured data with Mistral from: {image_path}"
+                    f"Extracting structured data with Mistral (model: {self.mistral_model}) from: {image_path}"
                 )
                 # Use same JSON schema as other providers
                 schema = {
