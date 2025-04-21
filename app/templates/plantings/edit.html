@@ -80,29 +80,13 @@
                                    value="{{ planting.planting_date|strftime('%Y-%m-%d') if planting.planting_date else '' }}">
                         </div>
 
-                        <!-- Expected and Actual Germination -->
+                        <!-- Actual Germination and Maturity -->
                         <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="expected_germination_time" class="form-label">Expected Germination (days)</label>
-                                <input type="number" id="expected_germination_time" name="expected_germination_time" min="1"
-                                       class="form-control"
-                                       value="{{ planting.expected_germination_time }}">
-                            </div>
                             <div class="col-md-6">
                                 <label for="actual_germination_time" class="form-label">Actual Germination (days)</label>
                                 <input type="number" id="actual_germination_time" name="actual_germination_time" min="1"
                                        class="form-control"
                                        value="{{ planting.actual_germination_time }}">
-                            </div>
-                        </div>
-
-                        <!-- Expected and Actual Maturity -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="expected_maturity_time" class="form-label">Expected Maturity (days)</label>
-                                <input type="number" id="expected_maturity_time" name="expected_maturity_time" min="1"
-                                       class="form-control"
-                                       value="{{ planting.expected_maturity_time }}">
                             </div>
                             <div class="col-md-6">
                                 <label for="actual_maturity_time" class="form-label">Actual Maturity (days)</label>

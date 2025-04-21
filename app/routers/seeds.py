@@ -57,10 +57,10 @@ async def get_seed_data(seed_id: int, db: AsyncSession = Depends(get_db)):
         "id": seed.id,
         "name": seed.name,
         "variety": seed.variety,
-        "germination": seed.germination_rate,
-        "maturity": seed.maturity,
+        "brand": seed.brand,
         "seed_depth": seed.seed_depth,
         "spacing": seed.spacing,
+        "notes": seed.notes,
     }
 
 
@@ -76,9 +76,6 @@ async def create_seed(
     name: str = Form(...),
     variety: Optional[str] = Form(None),
     brand: Optional[str] = Form(None),
-    source: Optional[str] = Form(None),
-    germination_days: Optional[str] = Form(None),
-    maturity_days: Optional[str] = Form(None),
     planting_depth: Optional[str] = Form(None),
     spacing: Optional[str] = Form(None),
     growing_notes: Optional[str] = Form(None),
@@ -87,14 +84,9 @@ async def create_seed(
 ):
     try:
         # Convert empty strings to None and parse numbers
-        def parse_int(val):
-            return int(val) if val and val.strip() else None
-
         def parse_float(val):
             return float(val) if val and val.strip() else None
 
-        parsed_germination_days = parse_int(germination_days)
-        parsed_maturity_days = parse_int(maturity_days)
         parsed_planting_depth = parse_float(planting_depth)
         parsed_spacing = parse_float(spacing)
 
@@ -221,11 +213,9 @@ async def update_seed(
     seed_id: int,
     name: str = Form(...),
     variety: Optional[str] = Form(None),
-    source: Optional[str] = Form(None),
-    maturity_days: Optional[int] = Form(None),
-    germination_days: Optional[int] = Form(None),
-    planting_depth: Optional[float] = Form(None),
-    spacing: Optional[float] = Form(None),
+    brand: Optional[str] = Form(None),
+    planting_depth: Optional[str] = Form(None),
+    spacing: Optional[str] = Form(None),
     growing_notes: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db),
@@ -238,14 +228,20 @@ async def update_seed(
         if seed is None:
             raise HTTPException(status_code=404, detail="Seed not found")
 
+        # Parse optional inputs
+        def parse_float(val):
+            return float(val) if val and str(val).strip() else None
+
+        parsed_depth = parse_float(planting_depth)
+        parsed_spacing = parse_float(spacing)
+
         # Update fields
         seed.name = name
         seed.variety = variety
-        # No source field in the model, skip it
-        seed.maturity = maturity_days  # Use correct field name maturity
-        # Handle germination_days separately if needed
-        seed.seed_depth = planting_depth  # Use correct field name seed_depth
-        seed.spacing = spacing
+        seed.brand = brand
+        seed.seed_depth = parsed_depth
+        seed.spacing = parsed_spacing
+        seed.notes = growing_notes
 
         # Save uploaded image if provided
         if image and image.filename:
@@ -369,26 +365,6 @@ async def update_seed_from_structured_data(
         and should_update("brand")
     ):
         seed.brand = structured_data["brand"]
-
-    if (
-        "germination_rate" in structured_data
-        and structured_data["germination_rate"]
-        and should_update("germination_rate")
-    ):
-        try:
-            seed.germination_rate = float(structured_data["germination_rate"])
-        except (ValueError, TypeError):
-            pass
-
-    if (
-        "maturity" in structured_data
-        and structured_data["maturity"]
-        and should_update("maturity")
-    ):
-        try:
-            seed.maturity = int(structured_data["maturity"])
-        except (ValueError, TypeError):
-            pass
 
     if (
         "seed_depth" in structured_data

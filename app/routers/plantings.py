@@ -107,8 +107,6 @@ async def create_planting(
     request: Request,
     name: str = Form(...),
     seed_id: str = Form(default=""),
-    expected_germination_time: str = Form(default=""),
-    expected_maturity_time: str = Form(default=""),
     seeds_planted: str = Form(default=""),
     planting_date: Optional[str] = Form(default=None),
     notes: Optional[str] = Form(default=""),
@@ -118,12 +116,6 @@ async def create_planting(
     """Create new planting"""
     # Convert empty strings to None for integer fields
     parsed_seed_id = int(seed_id) if seed_id.strip() else None
-    parsed_expected_germination_time = (
-        int(expected_germination_time) if expected_germination_time.strip() else None
-    )
-    parsed_expected_maturity_time = (
-        int(expected_maturity_time) if expected_maturity_time.strip() else None
-    )
     parsed_seeds_planted = int(seeds_planted) if seeds_planted.strip() else None
 
     # Parse the planting date if provided
@@ -140,8 +132,6 @@ async def create_planting(
     new_planting = Planting(
         name=name,
         seed_id=parsed_seed_id,
-        expected_germination_time=parsed_expected_germination_time,
-        expected_maturity_time=parsed_expected_maturity_time,
         seeds_planted=parsed_seeds_planted,
         planting_date=parsed_planting_date,
         notes=notes,
@@ -226,9 +216,7 @@ async def update_planting(
     request: Request,
     name: str = Form(...),
     seed_id: str = Form(default=""),
-    expected_germination_time: str = Form(default=""),
     actual_germination_time: str = Form(default=""),
-    expected_maturity_time: str = Form(default=""),
     actual_maturity_time: str = Form(default=""),
     seeds_planted: str = Form(default=""),
     successful_plants: str = Form(default=""),
@@ -246,14 +234,8 @@ async def update_planting(
 
     # Convert empty strings to None for integer fields
     parsed_seed_id = int(seed_id) if seed_id.strip() else None
-    parsed_expected_germination_time = (
-        int(expected_germination_time) if expected_germination_time.strip() else None
-    )
     parsed_actual_germination_time = (
         int(actual_germination_time) if actual_germination_time.strip() else None
-    )
-    parsed_expected_maturity_time = (
-        int(expected_maturity_time) if expected_maturity_time.strip() else None
     )
     parsed_actual_maturity_time = (
         int(actual_maturity_time) if actual_maturity_time.strip() else None
@@ -277,9 +259,7 @@ async def update_planting(
     # Update fields
     planting.name = name
     planting.seed_id = parsed_seed_id
-    planting.expected_germination_time = parsed_expected_germination_time
     planting.actual_germination_time = parsed_actual_germination_time
-    planting.expected_maturity_time = parsed_expected_maturity_time
     planting.actual_maturity_time = parsed_actual_maturity_time
     planting.seeds_planted = parsed_seeds_planted
     planting.successful_plants = parsed_successful_plants

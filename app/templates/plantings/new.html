@@ -86,26 +86,6 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="form-section">
-                    <div class="row mb-3">
-                        <!-- Expected Germination Time -->
-                        <div class="col-md-6">
-                            <label for="expected_germination_time" class="form-label">Expected Germination (days)</label>
-                            <input type="number" id="expected_germination_time" name="expected_germination_time" min="1"
-                                class="form-control"
-                                placeholder="Days until germination">
-                        </div>
-                        
-                        <!-- Expected Maturity Time -->
-                        <div class="col-md-6">
-                            <label for="expected_maturity_time" class="form-label">Expected Maturity (days)</label>
-                            <input type="number" id="expected_maturity_time" name="expected_maturity_time" min="1"
-                                class="form-control"
-                                placeholder="Days until maturity">
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Notes -->
                 <div class="form-section">
@@ -165,8 +145,6 @@
     function populateSeedData(seedId) {
         if (!seedId) {
             // Clear fields if no seed is selected
-            document.getElementById('expected_germination_time').value = '';
-            document.getElementById('expected_maturity_time').value = '';
             document.getElementById('notes').value = '';
             return;
         }
@@ -188,16 +166,6 @@
                 return response.json();
             })
             .then(data => {
-                // Auto-populate fields from seed data
-                if (data.maturity) {
-                    document.getElementById('expected_maturity_time').value = data.maturity;
-                }
-                
-                // Add germination time if available
-                if (data.germination) {
-                    document.getElementById('expected_germination_time').value = data.germination;
-                }
-                
                 // Set a default name based on the seed
                 const nameField = document.getElementById('name');
                 if (!nameField.value && data.name) {

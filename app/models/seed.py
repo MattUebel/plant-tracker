@@ -25,8 +25,6 @@ class Seed(Base):
     spacing = Column(Float)  # Spacing between plants in inches
 
     # Additional useful fields
-    purchase_date = Column(Date)
-    expiration_date = Column(Date)
     notes = Column(Text)
 
     # Metadata

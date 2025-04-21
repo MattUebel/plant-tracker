@@ -453,8 +453,6 @@ class ImageProcessor:
                 "name": "The main name/type of the plant (e.g., Tomato, Basil) - String",
                 "variety": "The specific variety of the plant/seed - String",
                 "brand": "The brand or company that produced the seed packet - String",
-                "germination_rate": "The germination rate as a decimal between 0.0-1.0 (e.g., 0.85 for 85%) - Float",
-                "maturity": "Days to maturity/harvest as a number - Integer",
                 "growth": "Growth habit or pattern (e.g., Determinate, Bush, Vining) - String",
                 "seed_depth": "Recommended planting depth in inches - Float",
                 "spacing": "Recommended spacing between plants in inches - Float",
@@ -462,7 +460,6 @@ class ImageProcessor:
                 "notes": "Additional important information from the packet - String"
             }
             
-            For the germination rate, if it's provided as a percentage (e.g., 85%), convert it to decimal (0.85).
             For seed_depth and spacing, convert to inches if given in other units.
             If any information is not available in the image, use null for that field.
             Your response should be ONLY the JSON object with no additional text.
@@ -640,8 +637,6 @@ class ImageProcessor:
                         "name": {"type": "string"},
                         "variety": {"type": ["string", "null"]},
                         "brand": {"type": ["string", "null"]},
-                        "germination_rate": {"type": ["number", "null"]},
-                        "maturity": {"type": ["integer", "null"]},
                         "growth": {"type": ["string", "null"]},
                         "seed_depth": {"type": ["number", "null"]},
                         "spacing": {"type": ["number", "null"]},

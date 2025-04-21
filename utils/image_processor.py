@@ -422,8 +422,10 @@ class ImageProcessor:
             ):
                 img = img.convert("RGB")
 
-            # Compress and resize if needed
-            max_size_bytes = 4 * 1024 * 1024  # 4MB limit
+            # Compute limits accounting for base64 expansion (4/3 overhead)
+            max_base64_bytes = 5 * 1024 * 1024  # 5MB limit for base64 payload
+            # Raw image bytes must be smaller to ensure base64 stays under 5MB
+            max_raw_bytes = int(max_base64_bytes * 3 / 4)  # ~3.75MB raw bytes limit
             quality = 90
             width, height = img.size
 
@@ -432,23 +434,20 @@ class ImageProcessor:
             img.save(img_byte_arr, format="JPEG", quality=quality)
             current_size = img_byte_arr.tell()
 
-            # Iteratively reduce size until under limit
-            while current_size > max_size_bytes:
+            # Iteratively reduce size until raw bytes under threshold
+            while current_size > max_raw_bytes:
                 if quality > 50:
-                    # First try reducing quality
                     quality -= 10
                 else:
-                    # Then try reducing dimensions
                     width = int(width * 0.9)
                     height = int(height * 0.9)
                     img = img.resize((width, height), Image.Resampling.LANCZOS)
-
-                # Check new size
+                # Recalculate size
                 img_byte_arr = BytesIO()
                 img.save(img_byte_arr, format="JPEG", quality=quality)
                 current_size = img_byte_arr.tell()
 
-            # Get the processed image as bytes and encode for API
+            # Use processed raw bytes which ensure base64 payload is under limit
             img_byte_arr.seek(0)
             image_bytes = img_byte_arr.getvalue()
             encoded_image = base64.b64encode(image_bytes).decode("utf-8")

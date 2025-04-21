@@ -192,16 +192,6 @@
                             <table class="table">
                                 <tbody>
                                     <tr>
-                                        <th scope="row">Expected Germination</th>
-                                        <td>
-                                            {% if planting.expected_germination_time %}
-                                                {{ planting.expected_germination_time }} days
-                                            {% else %}
-                                                <span class="text-muted">Not recorded</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    <tr>
                                         <th scope="row">Actual Germination</th>
                                         <td>
                                             {% if planting.actual_germination_time %}
@@ -212,16 +202,6 @@
                                                         {{ "slower" if planting.actual_germination_time > planting.expected_germination_time else "faster" }})
                                                     </small>
                                                 {% endif %}
-                                            {% else %}
-                                                <span class="text-muted">Not recorded</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">Expected Maturity</th>
-                                        <td>
-                                            {% if planting.expected_maturity_time %}
-                                                {{ planting.expected_maturity_time }} days
                                             {% else %}
                                                 <span class="text-muted">Not recorded</span>
                                             {% endif %}

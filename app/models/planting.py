@@ -28,14 +28,10 @@ class Planting(Base):
     seed = relationship("Seed", back_populates="plantings")
 
     # Planting specific fields
-    expected_germination_time = Column(
-        Integer
-    )  # Expected days to germinate, from seed data
+    # actual germination and maturity times
     actual_germination_time = Column(Integer)  # Actual days to germinate, as observed
-    expected_maturity_time = Column(
-        Integer
-    )  # Expected days to maturity, from seed data
     actual_maturity_time = Column(Integer)  # Actual days to maturity, as observed
+
     harvest_events = Column(
         JSON
     )  # Array of {date, quantity, units, notes} for harvest events

@@ -95,7 +95,7 @@ class SeedPacketProcessor:
                 # Use selected provider (form override) or configured default
                 _, structured_data = (
                     await image_processor.process_image_with_vision_api(
-                        file_path, provider=provider, model_name=model
+                        file_path, provider=provider
                     )
                 )
                 vision_end = time.perf_counter()
